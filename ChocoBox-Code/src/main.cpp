@@ -2,6 +2,7 @@
 #include <ConnecT.h>
 #include <Humidifier.h>
 #include "DHT.h"
+#include "HumidityController.h"
 
 #define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321
 
@@ -15,12 +16,16 @@ ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a intern
 Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador'
 DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
+HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
 
 /* Sensores -  Variables */
 float humidity_01 = 0; // Variable que almacena la humedad
 float temperature_01 = 0; // Variable que almacena la temperatura
 float humidity_02 = 0; // Variable que almacena la humedad
 float temperature_02 = 0; // Variable que almacena la temperatura
+
+/* Variables de control */
+float desiredHumidity = 50; // Variable que almacena la humedad deseada
 
 void setup() {
   Serial.begin(115200); // Inicialización del puerto serial
@@ -29,6 +34,7 @@ void setup() {
   humidifier.setUp(PIN_HUM); // Configuración del humidificador
   dht_01.begin(); // Configuración del sensor DHT
   dht_02.begin(); // Configuración del sensor DHT
+  humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
 
   /* Configuración del IOT */
   connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi

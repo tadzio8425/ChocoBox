@@ -10,6 +10,18 @@
 #include <TemperatureController.h>
 #include <Heater.h>
 #include <Interpol.h>
+#include "SPIFFS.h"
+
+/* Funciones de ayuda */
+void printVector(const std::vector<float>& vec) {
+    for (float value : vec) {
+        Serial.print(value);
+        Serial.print(",");
+    }
+    Serial.println();
+}
+
+
 
 /* Pines */
 #define PIN_HUM 23 // Pin del Humidificador
@@ -39,9 +51,16 @@ HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); 
 TemperatureController temperatureController(&temperature_01, &temperature_02, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
 RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
+Interpol interpol;
+
+
+std::vector<float> x = {0, 24, 48, 72, 96};
+std::vector<float> v = {27, 22, 22.5, 22, 20.5};
+std::vector<float> xq = interpol.generateXq(0, 96, 0.1f);
 
 void setup() {
   Serial.begin(115200); // Inicialización del puerto serial
+ printVector(interpol.cubicSpline(x, v, xq));
 
   /* Conexión con el RTC */
   rtc.begin();

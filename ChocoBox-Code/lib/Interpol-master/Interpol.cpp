@@ -1,26 +1,34 @@
 #include "Arduino.h"
 #include <Interpol.h>
+#include <vector>
+#include <cmath>
 
-float* Interpol::cubicSpline(float* x, float* v, float* xq) {
-    int n = sizeof(x) / sizeof(float);
+std::vector<float> Interpol::generateXq(float start, float end, float step) {
+    std::vector<float> xq;
+    for (float x = start; x <= end; x += step) {
+        xq.push_back(x);
+    }
+    return xq;
+}
+
+
+std::vector<float> Interpol::cubicSpline(const std::vector<float>& x, const std::vector<float>& v, const std::vector<float>& xq) {
+    int n = v.size();
     int m = n - 1;
-    float* y = v;
+    std::vector<float> y = v;
 
-    float* delta_x = new float[m];
-    float* delta_y = new float[m];
-    float* d = new float[m];
+    std::vector<float> delta_x(m);
+    std::vector<float> delta_y(m);
+    std::vector<float> d(m);
 
-    // Se definen las ecuaciones base de diferencias entre puntos
     for (int i = 1; i < n; i++) {
         delta_y[i - 1] = y[i] - y[i - 1];
         delta_x[i - 1] = x[i] - x[i - 1];
         d[i - 1] = delta_y[i - 1] / delta_x[i - 1];
     }
 
-    // Se contruye la matriz A de tamaño nxn
-    float** A = new float*[n];
+    std::vector<std::vector<float>> A(n, std::vector<float>(n, 0));
     for (int f = 0; f < n; f++) {
-        A[f] = new float[n];
         for (int c = 0; c < n; c++) {
             if (f == c) {
                 if (c == 0 || c == n - 1) {
@@ -29,6 +37,7 @@ float* Interpol::cubicSpline(float* x, float* v, float* xq) {
                     A[f][c] = 2 * (delta_x[c - 1] + delta_x[c]);
                 }
             }
+
             if (f == c - 1) {
                 if (c == 1) {
                     A[f][c] = 1;
@@ -36,6 +45,7 @@ float* Interpol::cubicSpline(float* x, float* v, float* xq) {
                     A[f][c] = delta_x[c - 2];
                 }
             }
+
             if (c == f - 1) {
                 if (c == n - 2) {
                     A[f][c] = 1;
@@ -46,8 +56,7 @@ float* Interpol::cubicSpline(float* x, float* v, float* xq) {
         }
     }
 
-    // Se contruye el vector b
-    float* b = new float[n];
+    std::vector<float> b(n, 0);
     for (int i = 0; i < n; i++) {
         if (i == 0) {
             b[i] = d[i];
@@ -62,115 +71,78 @@ float* Interpol::cubicSpline(float* x, float* v, float* xq) {
         b[i] = 3 * b[i];
     }
 
-    // Se utiliza Gauss-Seidel para encontrar los coeficientes K
-    float* k = gaussSeidelSOR(A, b, n, 1.3);
+    std::vector<float> k = gaussSeidelSOR(A, b, n, 1.3);
 
-    // Con los coeficientes encontrados, se procede a generar las ecuaciones
+    std::vector<float> vq;
     float paso = xq[1] - xq[0];
+    std::vector<float> delta_x_extended = {0};
+    delta_x_extended.insert(delta_x_extended.end(), delta_x.begin(), delta_x.end());
+    std::vector<float> d_extended = {0};
+    d_extended.insert(d_extended.end(), d.begin(), d.end());
+    int contador = 1;
 
-    delta_x = new float[n];
-    delta_x[0] = 0;
-    for (int i = 1; i < n; i++) {
-        delta_x[i] = x[i] - x[i - 1];
-    }
-
-    d = new float[n];
-    d[0] = 0;
-    for (int i = 1; i < n; i++) {
-        d[i] = delta_y[i - 1] / delta_x[i];
-    }
-
-    int contador = 0;
-    int arraySize = static_cast<int>((xq[n - 1] - xq[0]) / paso);
-    float* vq = new float[arraySize];
-    
-    // Iterar a través de los puntos en x
     for (int i = 0; i < m; i++) {
         float inicio = x[i];
         float final = x[i + 1];
-        float rango = inicio;
+        std::vector<float> rango;
+        for (float jx = inicio; jx <= final; jx += paso) {
+            rango.push_back(jx);
+        }
 
-        while (rango <= final) {
-            float jx = rango;
+        for (int pasos = 1; pasos < rango.size(); pasos++) {
+            float jx = inicio + paso * pasos;
             if (jx == inicio) {
-                vq[contador] = y[i];
+                vq.push_back(v[i]);
             } else if (jx == final) {
-                vq[contador] = y[i + 1];
+                vq.push_back(v[i + 1]);
             } else {
-                float t = (jx - x[i]) / delta_x[i + 1];
+                float t = (jx - x[i]) / delta_x_extended[i + 1];
                 float tp = 1 - t;
-                float q = (t * y[i + 1]) + (tp * y[i]) + delta_x[i + 1] * (((k[i] - d[i + 1]) * t * (tp * tp)) - (k[i + 1] - d[i + 1]) * (t * t) * tp);
-                vq[contador] = q;
+                float q = (t * v[i + 1]) + (tp * v[i]) + delta_x_extended[i + 1] * (((k[i] - d_extended[i + 1]) * t * (tp * tp)) - (k[i + 1] - d_extended[i + 1]) * (t * t * tp));
+                vq.push_back(q);
             }
             contador++;
-            rango += paso;
         }
     }
-
-    // Liberar memoria
-    delete[] delta_x;
-    delete[] delta_y;
-    delete[] d;
-    for (int f = 0; f < n; f++) {
-        delete[] A[f];
-    }
-    delete[] A;
-    delete[] b;
-    delete[] k;
 
     return vq;
 }
 
-
-float* gaussSeidelSOR(float** A, float* b, int n, float w) {
+std::vector<float> Interpol::gaussSeidelSOR(std::vector<std::vector<float>>& A, std::vector<float>& b, int n, float w) {
     float eps = 1e-6;
     int N = 100;
-    int k = 1; // Iteración actual
-    float dif = 1; // Diferencia inicial
+    int k = 1; // Iteration counter
+    float dif = 1; // Initial difference
 
-    float* x0 = new float[n]; // Valores iniciales
-    float* x = new float[n]; // Vector con la solución
-
-    for (int i = 0; i < n; i++) {
-        x0[i] = 0; // Inicializar valores iniciales en 0
-        x[i] = 0; // Inicializar solución en 0
-    }
+    std::vector<float> x0(n, 0.0f); // Initial values
+    std::vector<float> x(n, 0.0f); // Solution vector
 
     while (k <= N && dif > eps) {
         for (int i = 0; i < n; i++) {
-            // Sumatoria para los valores ya calculados (iteración actual)
             float sum_j_act = 0;
             for (int j = 0; j < i; j++) {
-                if (j != i) {
-                    sum_j_act += (-A[i][j] * x[j]);
-                }
+                sum_j_act += -A[i][j] * x[j];
             }
 
-            // Sumatoria para los valores todavía no calculados (iteración anterior)
             float sum_j_ant = 0;
             for (int j = i + 1; j < n; j++) {
-                if (j != i) {
-                    sum_j_ant += (-A[i][j] * x0[j]);
-                }
+                sum_j_ant += -A[i][j] * x0[j];
             }
 
-            // Cálculo de la incógnita actual, siendo sobre-relajada por w
             x[i] = (1 - w) * x0[i] + (w / A[i][i]) * (sum_j_act + sum_j_ant + b[i]);
         }
 
         dif = 0;
         for (int i = 0; i < n; i++) {
-            dif = std::max(dif, std::abs(x0[i] - x[i])); // Calcular la máxima diferencia entre x0 y x
+            dif = std::max(dif, std::abs(x0[i] - x[i]));
         }
 
         k++;
-        for (int i = 0; i < n; i++) {
-            x0[i] = x[i];
-        }
+        x0 = x;
     }
-
-    delete[] x0;
 
     return x;
 }
+
+
 

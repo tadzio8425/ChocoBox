@@ -3,6 +3,8 @@
 #include <Humidifier.h>
 #include "DHT.h"
 #include "HumidityController.h"
+#include "RTClib.h"
+#include <Adafruit_Sensor.h>
 
 #define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321
 
@@ -10,13 +12,6 @@
 #define PIN_HUM 23 // Pin del Humidificador
 #define DHTPIN_01 22 // Pin del sensor DHT 01
 #define DHTPIN_02 21 // Pin del sensor DHT 02
-
-/* Objetos */
-ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
-Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador'
-DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
-DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
-HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
 
 /* Sensores -  Variables */
 float humidity_01 = 0; // Variable que almacena la humedad
@@ -27,8 +22,25 @@ float temperature_02 = 0; // Variable que almacena la temperatura
 /* Variables de control */
 float desiredHumidity = 50; // Variable que almacena la humedad deseada
 
+/* Objetos */
+ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
+Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador'
+DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
+DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
+HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
+RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
+
+
 void setup() {
   Serial.begin(115200); // Inicialización del puerto serial
+
+  /* Conexión con el RTC */
+  rtc.begin();
+
+  // Se re-establece el tiempo cuando el RTC pierde potencia o cuando está nuevo
+  if (rtc.lostPower()) {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
 
   /* Configuración de los módulos */
   humidifier.setUp(PIN_HUM); // Configuración del humidificador
@@ -52,6 +64,10 @@ void setup() {
 }
 
 void loop() {
+
+  /* Tiempo actual dado por el RTC */
+  DateTime now = rtc.now();
+
   /* Lectura de los sensores */
   humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
   temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura

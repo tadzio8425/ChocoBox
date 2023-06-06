@@ -118,6 +118,12 @@ void ConnecT::addSensor(float* sensor_value){
     FireSense.addUserValue(sensor_value);
 }
 
+FirebaseJson* ConnecT::getJSON(String path){
+  Firebase.RTDB.getJSON(&fbdo1, path);
+  FirebaseJson* json = fbdo1.jsonObjectPtr();
+  return json;
+}
+
 void ConnecT::setWebServer(int port)
 {
   _serverPointer = new WebServer(port);

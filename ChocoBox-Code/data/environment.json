@@ -1,0 +1,26 @@
+{
+    "environment":{
+
+        "0":{
+            "temperature":27,
+            "humidity":59.5
+        },
+        "24":{
+            "temperature":22,
+            "humidity":59
+        },
+        "48":{
+            "temperature":22.5,
+            "humidity":60
+        },
+        "72":{
+            "temperature":22,
+            "humidity":57
+        },
+        "96":{
+            "temperature":20.5,
+            "humidity":54
+        }
+    }
+
+}

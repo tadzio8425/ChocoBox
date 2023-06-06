@@ -12,6 +12,16 @@
 #include <Interpol.h>
 #include "SPIFFS.h"
 
+
+
+/* Variables de interpolación */
+std::vector<float> x;
+std::vector<float> v_temp;
+std::vector<float> v_humidity;
+std::vector<float> xq;
+std::vector<float> vq;
+
+
 /* Funciones de ayuda */
 void printVector(const std::vector<float>& vec) {
     for (float value : vec) {
@@ -19,6 +29,23 @@ void printVector(const std::vector<float>& vec) {
         Serial.print(",");
     }
     Serial.println();
+}
+
+void getVectorsFromJson(FirebaseJson* json, std::vector<float>& x, std::vector<float>& v_temp, std::vector<float>& v_humidity) {
+    size_t arraySize = json->iteratorBegin();
+    for (size_t i = 0; i < arraySize; i+=3) {
+        int type;
+        String temperature, humidity;
+        String key, value;
+
+        json->iteratorGet(i, type, key, value);
+        float time = key.toFloat();
+        json->iteratorGet(i+1, type, key, humidity);
+        json->iteratorGet(i+2, type, key, temperature);
+        x.push_back(time);
+        v_temp.push_back(temperature.toFloat());
+        v_humidity.push_back(humidity.toFloat());
+    }
 }
 
 
@@ -38,8 +65,9 @@ float humidity_02 = 0; // Variable que almacena la humedad
 float temperature_02 = 0; // Variable que almacena la temperatura
 
 /* Variables de control */
-float desiredHumidity = 50; // Variable que almacena la humedad deseada
-float desiredTemperature = 25; // Variable que almacena la temperatura deseada
+FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a recrear
+float desiredHumidity = 0; // Variable que almacena la humedad deseada
+float desiredTemperature = 0; // Variable que almacena la temperatura deseada
 
 /* Objetos */
 ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
@@ -54,13 +82,8 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: 
 Interpol interpol;
 
 
-std::vector<float> x = {0, 24, 48, 72, 96};
-std::vector<float> v = {27, 22, 22.5, 22, 20.5};
-std::vector<float> xq = interpol.generateXq(0, 96, 0.1f);
-
 void setup() {
   Serial.begin(115200); // Inicialización del puerto serial
- printVector(interpol.cubicSpline(x, v, xq));
 
   /* Conexión con el RTC */
   rtc.begin();
@@ -95,6 +118,13 @@ void setup() {
   connecT.addSensor(&temperature_01);
   connecT.addSensor(&humidity_02);
   connecT.addSensor(&temperature_02);
+
+  //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
+  environment = connecT.getJSON("/environment");
+  getVectorsFromJson(environment, x, v_temp, v_humidity);
+  xq = interpol.generateXq(x[0], x[x.size()-1], 0.1);
+  vq = interpol.cubicSpline(x, v_temp, xq);
+  printVector(vq);
 
   // Conexión a Firesense - Último que debe hacerse
   connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); 

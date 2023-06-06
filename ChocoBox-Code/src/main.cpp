@@ -5,13 +5,15 @@
 #include "HumidityController.h"
 #include "RTClib.h"
 #include <Adafruit_Sensor.h>
-
-#define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
 
 /* Pines */
 #define PIN_HUM 23 // Pin del Humidificador
-#define DHTPIN_01 22 // Pin del sensor DHT 01
-#define DHTPIN_02 21 // Pin del sensor DHT 02
+
+#define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321 - SDA: 21, SCL: 22
+#define DHTPIN_01 18 // Pin del sensor DHT 01
+#define DHTPIN_02 19 // Pin del sensor DHT 02
 
 /* Sensores -  Variables */
 float humidity_01 = 0; // Variable que almacena la humedad
@@ -29,7 +31,7 @@ DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura
 DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
 RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
-
+LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
 
 void setup() {
   Serial.begin(115200); // Inicialización del puerto serial
@@ -47,6 +49,14 @@ void setup() {
   dht_01.begin(); // Configuración del sensor DHT
   dht_02.begin(); // Configuración del sensor DHT
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
+
+  /* Configuración de la pantalla LCD */
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Humidity: ");
+  lcd.setCursor(0, 1);
+  lcd.print("Temperature: ");
 
   /* Configuración del IOT */
   connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi
@@ -74,4 +84,12 @@ void loop() {
   humidity_02 = dht_02.readHumidity(); // Lectura de la humedad
   temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura
 
+  /* Control de la humedad */
+  humidityController.update();
+
+  /* Actualización de la pantalla LCD */
+  lcd.setCursor(10, 0);
+  lcd.print((humidity_01+humidity_02)/2);
+  lcd.setCursor(13, 1);
+  lcd.print((temperature_01+temperature_02)/2);
 }

@@ -1,13 +1,20 @@
 #include <Arduino.h>
 #include <ConnecT.h>
 #include <Humidifier.h>
+#include "DHT.h"
+
+#define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321
 
 /* Pines */
 #define PIN_HUM 23 // Pin del Humidificador
+#define DHTPIN_01 22 // Pin del sensor DHT 01
+#define DHTPIN_02 21 // Pin del sensor DHT 02
 
 /* Objetos */
 ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
 Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador'
+DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
+DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 
 /* Sensores -  Variables */
 float humidity_01 = 0; // Variable que almacena la humedad
@@ -20,6 +27,8 @@ void setup() {
 
   /* Configuración de los módulos */
   humidifier.setUp(PIN_HUM); // Configuración del humidificador
+  dht_01.begin(); // Configuración del sensor DHT
+  dht_02.begin(); // Configuración del sensor DHT
 
   /* Configuración del IOT */
   connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi
@@ -32,13 +41,15 @@ void setup() {
   connecT.addSensor(&humidity_02);
   connecT.addSensor(&temperature_02);
 
-  connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); // Conexión a Firesense - Último que debe hacerse
-
-
+  // Conexión a Firesense - Último que debe hacerse
+  connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  delay(1000);
-  humidity_01 = humidity_01 + 1;
+  /* Lectura de los sensores */
+  humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
+  temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura
+  humidity_02 = dht_02.readHumidity(); // Lectura de la humedad
+  temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura
+
 }

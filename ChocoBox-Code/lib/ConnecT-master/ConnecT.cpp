@@ -95,6 +95,9 @@ void ConnecT::setFirebase(char* api_key, char* database_url, char* user_email, c
 
 void ConnecT::setFiresense(char* basePath, char* deviceID, int timeZone, int lastSeenInterval,
  int logInterval, int conditionProcessInterval, long dataRetainingPeriod){
+
+    Serial.println("Espere a que FireSense configure sus sensores...");
+    
     fsConfig.basePath = basePath;
     fsConfig.deviceId = deviceID;
     fsConfig.time_zone = timeZone; // change for your local time zone
@@ -105,13 +108,15 @@ void ConnecT::setFiresense(char* basePath, char* deviceID, int timeZone, int las
     fsConfig.dataRetainingPeriod = dataRetainingPeriod; // keep the log data for 1 day
     fsConfig.shared_fbdo = &fbdo1;               // for store/restore the data
     fsConfig.stream_fbdo = &fbdo2;               // for stream, if set this stream_fbdo to nullptr, the stream will connected through shared FirebaseData object.
-    fsConfig.debug = true;
+    fsConfig.debug = false;
 
     FireSense.begin(&fsConfig, "");
 
     load_FsConfig();
     FireSense.loadConfig();
     FireSense.updateConfig();
+
+    Serial.println("Sensores listos!");
 }
 
 void ConnecT::addSensor(float* sensor_value){

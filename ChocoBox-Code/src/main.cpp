@@ -150,9 +150,7 @@ void setup() {
   // Conexión a Firesense - Último que debe hacerse
   connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); 
 
-  Serial.println(preferences.getBytesLength("vq"));
-
-
+  /* Se obtiene la información almacenada en memoria flash */
   preferences.getBytes("vq", vq_buffer, preferences.getBytesLength("vq"));
 
 }

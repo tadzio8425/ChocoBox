@@ -12,9 +12,13 @@ class ConnecT
     void setWiFi_STA(char* wifi_ssid, char* wifi_password);
     void setWiFi_wokwi();
     void setFirebase(char* api_key, char* database_url, char* user_email, char* user_password);
+    void setFiresense(char* basePath, char* deviceID, int timeZone, int lastSeenInterval,
+                      int logInterval, int conditionProcessInterval, long dataRetainingPeriod);
+    void addSensor(float* sensor_value);
     void setWebServer(int port);
     void addGETtoWeb(String path, void (*function)());
     void addPUTtoWeb(String path, void (*function)());
+    void load_FsConfig();
     WebServer* getServerPointer();
   private:
     WebServer* _serverPointer;

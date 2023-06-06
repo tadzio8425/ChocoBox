@@ -11,7 +11,7 @@
 #include <Heater.h>
 #include <Interpol.h>
 #include "SPIFFS.h"
-
+#include <Preferences.h>
 
 
 /* Variables de interpolación */
@@ -20,6 +20,7 @@ std::vector<float> v_temp;
 std::vector<float> v_humidity;
 std::vector<float> xq;
 std::vector<float> vq;
+float vq_buffer[1000] = {};
 
 
 /* Funciones de ayuda */
@@ -47,6 +48,7 @@ void getVectorsFromJson(FirebaseJson* json, std::vector<float>& x, std::vector<f
         v_humidity.push_back(humidity.toFloat());
     }
 }
+
 
 
 
@@ -79,7 +81,29 @@ HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); 
 TemperatureController temperatureController(&temperature_01, &temperature_02, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
 RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
-Interpol interpol;
+Interpol interpol; // Instancia de la clase Interpol: Permite la interpolación de los datos
+Preferences preferences; // Instancia de la clase Preferences: Permite el almacenamiento de datos en la memoria flash
+
+/* Funciones */
+
+void putVector(char* key, std::vector<float>& vq) {
+    size_t size = vq.size();
+    float vq_array[size];
+    std::copy(vq.begin(), vq.end(), vq_array);
+    vq.clear();  // Clear the vector to save memory
+
+    preferences.putBytes(key, vq_array, sizeof(vq_array));
+}
+
+
+void updateEnvironment(){
+
+  environment = connecT.getJSON("/environment");
+  getVectorsFromJson(environment, x, v_temp, v_humidity);
+  xq = interpol.generateXq(x[0], x[x.size()-1], 0.1);
+  vq = interpol.cubicSpline(x, v_temp, xq);
+  putVector("vq", vq);
+}
 
 
 void setup() {
@@ -99,6 +123,7 @@ void setup() {
   dht_02.begin(); // Configuración del sensor DHT
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
   temperatureController.setDesiredTemperature(&desiredTemperature); // Configuración de la temperatura deseada
+  preferences.begin("chocoBox", false);  // Se inicia la memoria flash
 
   /* Configuración de la pantalla LCD */
   lcd.init();
@@ -120,17 +145,21 @@ void setup() {
   connecT.addSensor(&temperature_02);
 
   //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
-  environment = connecT.getJSON("/environment");
-  getVectorsFromJson(environment, x, v_temp, v_humidity);
-  xq = interpol.generateXq(x[0], x[x.size()-1], 0.1);
-  vq = interpol.cubicSpline(x, v_temp, xq);
-  printVector(vq);
+  updateEnvironment();
 
   // Conexión a Firesense - Último que debe hacerse
   connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); 
+
+  Serial.println(preferences.getBytesLength("vq"));
+
+
+  preferences.getBytes("vq", vq_buffer, preferences.getBytesLength("vq"));
+
 }
 
 void loop() {
+
+  Serial.println(vq_buffer[34]);
 
   /* Tiempo actual dado por el RTC */
   DateTime now = rtc.now();

@@ -7,9 +7,12 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
+#include <TemperatureController.h>
+#include <Heater.h>
 
 /* Pines */
 #define PIN_HUM 23 // Pin del Humidificador
+#define PIN_HEAT 24 // Pin del Calentador
 
 #define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321 - SDA: 21, SCL: 22
 #define DHTPIN_01 18 // Pin del sensor DHT 01
@@ -23,13 +26,16 @@ float temperature_02 = 0; // Variable que almacena la temperatura
 
 /* Variables de control */
 float desiredHumidity = 50; // Variable que almacena la humedad deseada
+float desiredTemperature = 25; // Variable que almacena la temperatura deseada
 
 /* Objetos */
 ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
-Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador'
+Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador
+Heater heater; // Instancia de la clase Heater: Permite el control del calentador
 DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
+TemperatureController temperatureController(&temperature_01, &temperature_02, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
 RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
 
@@ -49,6 +55,7 @@ void setup() {
   dht_01.begin(); // Configuración del sensor DHT
   dht_02.begin(); // Configuración del sensor DHT
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
+  temperatureController.setDesiredTemperature(&desiredTemperature); // Configuración de la temperatura deseada
 
   /* Configuración de la pantalla LCD */
   lcd.init();
@@ -86,6 +93,9 @@ void loop() {
 
   /* Control de la humedad */
   humidityController.update();
+
+  /* Control de la temperatura */
+  temperatureController.update();
 
   /* Actualización de la pantalla LCD */
   lcd.setCursor(10, 0);

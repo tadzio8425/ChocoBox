@@ -19,8 +19,11 @@ std::vector<float> x;
 std::vector<float> v_temp;
 std::vector<float> v_humidity;
 std::vector<float> xq;
-std::vector<float> vq;
-float vq_buffer[1000] = {};
+
+std::vector<float> vq_temp;
+std::vector<float> vq_humidity;
+float vq_tempBuffer[1000] = {};
+float vq_humidityBuffer[1000] = {};
 
 
 /* Funciones de ayuda */
@@ -101,8 +104,12 @@ void updateEnvironment(){
   environment = connecT.getJSON("/environment");
   getVectorsFromJson(environment, x, v_temp, v_humidity);
   xq = interpol.generateXq(x[0], x[x.size()-1], 0.1);
-  vq = interpol.cubicSpline(x, v_temp, xq);
-  putVector("vq", vq);
+
+  vq_temp = interpol.cubicSpline(x, v_temp, xq);
+  vq_humidity = interpol.cubicSpline(x, v_humidity, xq);
+
+  putVector("vq_temp", vq_temp);
+  putVector("vq_humidity", vq_humidity);
 }
 
 
@@ -151,13 +158,15 @@ void setup() {
   connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); 
 
   /* Se obtiene la información almacenada en memoria flash */
-  preferences.getBytes("vq", vq_buffer, preferences.getBytesLength("vq"));
+  preferences.getBytes("vq_temp", vq_tempBuffer, preferences.getBytesLength("vq_temp"));
+  preferences.getBytes("vq_humidity", vq_humidityBuffer, preferences.getBytesLength("vq_humidity"));
 
 }
 
 void loop() {
 
-  Serial.println(vq_buffer[34]);
+  Serial.println(vq_tempBuffer[567]);
+  Serial.println(vq_humidityBuffer[234]);
 
   /* Tiempo actual dado por el RTC */
   DateTime now = rtc.now();

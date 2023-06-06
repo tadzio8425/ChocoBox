@@ -9,6 +9,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <TemperatureController.h>
 #include <Heater.h>
+#include <Interpol.h>
 
 /* Pines */
 #define PIN_HUM 23 // Pin del Humidificador

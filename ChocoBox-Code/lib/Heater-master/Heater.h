@@ -4,7 +4,6 @@
 
 class Heater{
     public:
-        Heater();
         void turnON();
         void turnOFF();
         void setUp(int pin);

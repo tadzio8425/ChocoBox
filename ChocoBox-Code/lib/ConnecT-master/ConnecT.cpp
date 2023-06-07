@@ -93,11 +93,18 @@ void ConnecT::setFirebase(char* api_key, char* database_url, char* user_email, c
 
 }
 
+void ConnecT::sendFloat(String path, float data){
+  if(Firebase.ready()){
+    Firebase.RTDB.setFloat(&fbdo1, path, data);
+  }
+
+}
+
 void ConnecT::setFiresense(char* basePath, char* deviceID, int timeZone, int lastSeenInterval,
  int logInterval, int conditionProcessInterval, long dataRetainingPeriod){
 
     Serial.println("Espere a que FireSense configure sus sensores...");
-    
+
     fsConfig.basePath = basePath;
     fsConfig.deviceId = deviceID;
     fsConfig.time_zone = timeZone; // change for your local time zone
@@ -122,6 +129,7 @@ void ConnecT::setFiresense(char* basePath, char* deviceID, int timeZone, int las
 void ConnecT::addSensor(float* sensor_value){
     FireSense.addUserValue(sensor_value);
 }
+
 
 FirebaseJson* ConnecT::getJSON(String path){
   Firebase.RTDB.getJSON(&fbdo1, path);
@@ -154,7 +162,7 @@ WebServer* ConnecT::getServerPointer(){
 
 
 void ConnecT::load_FsConfig(){
-  FireSense_Channel channel[4];
+  FireSense_Channel channel[5];
 
   channel[0].id = "HUMID1";
   channel[0].name = "Humidity sensor data";
@@ -193,4 +201,14 @@ void ConnecT::load_FsConfig(){
   channel[3].log = true;      // to store value to the database log
   channel[3].value_index = 3; // this the index of bound user variable which added with FireSense.addUserValue
   FireSense.addChannel(channel[3]);
+
+
+  channel[4].id = "ferm_time";
+  channel[4].name = "Fermentation Time";
+  channel[4].location = "Room1";
+  channel[4].type = Firesense_Channel_Type::Value;
+  channel[4].status = true;   // to store value to the database status
+  channel[4].log = true;      // to store value to the database log
+  channel[4].value_index = 4; // this the index of bound user variable which added with FireSense.addUserValue
+  FireSense.addChannel(channel[4]);
 }

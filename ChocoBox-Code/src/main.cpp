@@ -68,11 +68,14 @@ float humidity_01 = 0; // Variable que almacena la humedad
 float temperature_01 = 0; // Variable que almacena la temperatura
 float humidity_02 = 0; // Variable que almacena la humedad
 float temperature_02 = 0; // Variable que almacena la temperatura
+float ferm_time = 0; // Variable que almacena el tiempo de fermentación
 
 /* Variables de control */
 FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a recrear
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
 float desiredTemperature = 0; // Variable que almacena la temperatura deseada
+float paso = 0.1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+float now = 0; // Variable que almacena el tiempo actual
 
 /* Objetos */
 ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
@@ -103,14 +106,22 @@ void updateEnvironment(){
 
   environment = connecT.getJSON("/environment");
   getVectorsFromJson(environment, x, v_temp, v_humidity);
-  xq = interpol.generateXq(x[0], x[x.size()-1], 0.1);
+  xq = interpol.generateXq(x[0], x[x.size()-1], paso);
 
   vq_temp = interpol.cubicSpline(x, v_temp, xq);
   vq_humidity = interpol.cubicSpline(x, v_humidity, xq);
 
   putVector("vq_temp", vq_temp);
   putVector("vq_humidity", vq_humidity);
+
+  x.clear();
+  v_temp.clear();
+  v_humidity.clear();
+  xq.clear();
+  vq_temp.clear();
+  vq_humidity.clear();
 }
+
 
 
 void setup() {
@@ -118,6 +129,20 @@ void setup() {
 
   /* Conexión con el RTC */
   rtc.begin();
+  now = millis();
+
+  preferences.begin("chocoBox", false);  // Se inicia la memoria flash
+
+  /* Se ingresa la hora en que inició la fermentación */
+  preferences.putFloat("ferm_start", now);
+
+  if(!preferences.isKey("ferm_time")){
+    preferences.putFloat("ferm_time", 0);
+  }
+  else{
+    ferm_time = preferences.getFloat("ferm_time");
+  }
+
 
   // Se re-establece el tiempo cuando el RTC pierde potencia o cuando está nuevo
   if (rtc.lostPower()) {
@@ -130,7 +155,6 @@ void setup() {
   dht_02.begin(); // Configuración del sensor DHT
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
   temperatureController.setDesiredTemperature(&desiredTemperature); // Configuración de la temperatura deseada
-  preferences.begin("chocoBox", false);  // Se inicia la memoria flash
 
   /* Configuración de la pantalla LCD */
   lcd.init();
@@ -150,26 +174,24 @@ void setup() {
   connecT.addSensor(&temperature_01);
   connecT.addSensor(&humidity_02);
   connecT.addSensor(&temperature_02);
+  connecT.addSensor(&now);
+
+  // Conexión a Firesense - Último que debe hacerse
+  connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 60*1000, 24*60*60); 
 
   //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
   updateEnvironment();
 
-  // Conexión a Firesense - Último que debe hacerse
-  connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); 
-
-  /* Se obtiene la información almacenada en memoria flash */
+  /* Se obtiene la información almacenada en memoria flash - Curvas a replicar */
   preferences.getBytes("vq_temp", vq_tempBuffer, preferences.getBytesLength("vq_temp"));
   preferences.getBytes("vq_humidity", vq_humidityBuffer, preferences.getBytesLength("vq_humidity"));
+
 
 }
 
 void loop() {
-
-  Serial.println(vq_tempBuffer[567]);
-  Serial.println(vq_humidityBuffer[234]);
-
-  /* Tiempo actual dado por el RTC */
-  DateTime now = rtc.now();
+  /* Se actualiza el tiempo actual */
+  now = millis();
 
   /* Lectura de los sensores */
   humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
@@ -188,4 +210,15 @@ void loop() {
   lcd.print((humidity_01+humidity_02)/2);
   lcd.setCursor(13, 1);
   lcd.print((temperature_01+temperature_02)/2);
+
+  /* Se almacena el instante actual de funcionamiento de la fermentación */
+  preferences.putFloat("ferm_now", now);
+
+  /* Se almacena el tiempo de fermentación hasta el momento - Tiempo del dispositivo prendido */
+  ferm_time = preferences.getFloat("ferm_time");
+  float ferm_diff= now - preferences.getFloat("ferm_start");
+  float new_ferm_time = (ferm_time + ferm_diff);
+  preferences.putFloat("ferm_time", new_ferm_time);
+
+  
 }

@@ -17,6 +17,7 @@ class ConnecT
                       int logInterval, int conditionProcessInterval, long dataRetainingPeriod);
     FirebaseJson* getJSON(String path);
     void addSensor(float* sensor_value);
+    void sendFloat(String path, float data);
     void setWebServer(int port);
     void addGETtoWeb(String path, void (*function)());
     void addPUTtoWeb(String path, void (*function)());

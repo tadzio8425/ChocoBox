@@ -12,6 +12,9 @@
 #include <Interpol.h>
 #include "SPIFFS.h"
 #include <Preferences.h>
+#include <ChocoBoxREST.h>
+
+using namespace ChocoBoxREST;
 
 std::vector<float> x;
 std::vector<float> v_temp;
@@ -53,9 +56,6 @@ void getVectorsFromJson(FirebaseJson* json, std::vector<float>& x, std::vector<f
         v_humidity.push_back(humidity.toFloat());
     }
 }
-
-
-
 
 /* Pines */
 #define PIN_HUM 23 // Pin del Humidificador
@@ -206,6 +206,17 @@ void setup() {
     preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
   }
 
+  /* Se vinculan los apuntadores de los arrays de medición al protocolo REST */
+  ChocoBoxREST::linkServer(connecT.getServerPointer());
+  ChocoBoxREST::linkHumidity(humidity_buffer);
+  ChocoBoxREST::linkTemperature(temperature_buffer);
+
+  //Vincular el API REST con el servidor WiFi
+  connecT.addGETtoWeb("/temperature", ChocoBoxREST::getTemperature);
+  connecT.addGETtoWeb("/humidity", ChocoBoxREST::getHumidity);
+
+  (connecT.getServerPointer())->begin();
+
 }
 
 void loop() {
@@ -217,11 +228,12 @@ void loop() {
   desiredTemperature = vq_tempBuffer[index];
   desiredHumidity = vq_humidityBuffer[index];
 
+
   /* Lectura de los sensores */
-  humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
-  temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura
-  humidity_02 = dht_02.readHumidity(); // Lectura de la humedad
-  temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura
+  humidity_01 = index;//dht_01.readHumidity(); // Lectura de la humedad
+  temperature_01 = index;//dht_01.readTemperature(); // Lectura de la temperatura
+  humidity_02 = index;//dht_02.readHumidity(); // Lectura de la humedad
+  temperature_02 = index;//dht_02.readTemperature(); // Lectura de la temperatura
 
   /* Control de la humedad */
   humidityController.update();
@@ -263,17 +275,15 @@ void loop() {
 
       preferences.putBytes("data_tem", temperature_buffer, sizeof(temperature_buffer));
       preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
+
+      Serial.println("Datos almacenados.");
    }
 
- 
+  //Se revisan las posibles peticiones REST del cliente
+  (connecT.getServerPointer())->handleClient(); 
 
 
   /* Corre FireSense (último en el loop)*/
-   connecT.FS_run();
-
-
-
-
-  
+   connecT.FS_run();  
 
 }

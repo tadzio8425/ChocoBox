@@ -24,8 +24,8 @@ std::vector<float> xq;
 std::vector<float> vq_temp;
 std::vector<float> vq_humidity;
 
-const int numOfHours = 96; // Número de horas que dura la fermentación
-const float paso = 0.3; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+const int numOfHours = 336; // Número de horas que dura la fermentación
+const float paso = 1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 const int buffer_size = numOfHours/paso;
 
 float vq_tempBuffer[buffer_size] = {};
@@ -84,6 +84,8 @@ FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a re
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
 float desiredTemperature = 0; // Variable que almacena la temperatura deseada
 float now = 0; // Variable que almacena el tiempo actual
+bool* resetPointer;
+bool defaultReset = false; 
 
 
 /* Control del log - Persistencia de los datos */
@@ -103,6 +105,7 @@ RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
 Interpol interpol; // Instancia de la clase Interpol: Permite la interpolación de los datos
 Preferences preferences; // Instancia de la clase Preferences: Permite el almacenamiento de datos en la memoria flash
+
 
 /* Funciones */
 
@@ -140,6 +143,9 @@ void updateEnvironment(){
 
 void setup() {
   Serial.begin(115200); // Inicialización del puerto serial
+
+  /* Inicialización apuntadores */
+  resetPointer = &defaultReset; 
 
   /* Conexión con el RTC */
   rtc.begin();
@@ -214,10 +220,12 @@ void setup() {
   ChocoBoxREST::linkServer(connecT.getServerPointer());
   ChocoBoxREST::linkHumidity(humidity_buffer);
   ChocoBoxREST::linkTemperature(temperature_buffer);
+  ChocoBoxREST::linkReset(resetPointer);
 
   //Vincular el API REST con el servidor WiFi
   connecT.addGETtoWeb("/temperature", ChocoBoxREST::getTemperature);
   connecT.addGETtoWeb("/humidity", ChocoBoxREST::getHumidity);
+  connecT.addPUTtoWeb("/reset", ChocoBoxREST::putReset);
 
   (connecT.getServerPointer())->begin();
 
@@ -227,11 +235,37 @@ void loop() {
   /* Se actualiza el tiempo actual */
   now = millis();
 
+
+  /* Se revisa si se desea resetear la fermentación */
+  if(*resetPointer){
+
+    Serial.println("Reseteando la fermentación...");
+
+    *resetPointer = false;
+    
+    //Se pone ferm_time en 0
+    preferences.putFloat("ferm_time", 0);
+    ferm_time = 0;
+    ferm_time_hr = 0;
+
+    //Se reinician los arreglos de datos almacenados
+    memset(temperature_buffer, 0, sizeof(temperature_buffer));
+    memset(humidity_buffer, 0, sizeof(humidity_buffer));
+
+    preferences.putBytes("data_tem", temperature_buffer, sizeof(temperature_buffer));
+    preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
+
+    //Se reinicia el índice previo
+    prev_index = -1;
+    prev_ferm_time = 0;
+
+  }
+
+
   /* Se establece el valor deseado de temperatura y humedad según la gráfica */
   int index = (int) (ferm_time_hr/paso);
   desiredTemperature = vq_tempBuffer[index];
   desiredHumidity = vq_humidityBuffer[index];
-
 
   /* Lectura de los sensores */
   humidity_01 = desiredHumidity;//dht_01.readHumidity(); // Lectura de la humedad

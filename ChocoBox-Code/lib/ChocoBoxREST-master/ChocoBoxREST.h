@@ -22,6 +22,7 @@ namespace ChocoBoxREST{
     WebServer* _serverPointer;
     float* _temperatureArray;
     float* _humidityArray;
+    bool* _resetPointer;
     int _bufferSize;
 
     void add_json_object(char *tag, float value, char *unit) {
@@ -64,6 +65,24 @@ namespace ChocoBoxREST{
         _serverPointer->send(200, "application/json", buffer);
     }
 
+
+    //Métodos PUT
+    void putReset(){
+        jsonDocument.clear(); // Clear the JSON document before populating it
+
+        if ((*_serverPointer).hasArg("plain") == false) {
+        Serial.println("Esperaba un booleano, recibí: nada.");
+        }
+        String body = (*_serverPointer).arg("plain");
+        deserializeJson(jsonDocument, body);
+        
+        //Obtener referencia
+        (*_resetPointer) = (double) jsonDocument["reset"];
+        
+        //Se responde con la nueva referencia
+        (*_serverPointer).send(200, "application/json", "Ok");
+    }
+
     void linkTemperature(float temperatureArray[]){
       _temperatureArray = temperatureArray;
     }
@@ -71,6 +90,10 @@ namespace ChocoBoxREST{
     void linkHumidity(float humidityArray[]){
       _humidityArray = humidityArray;
     } 
+
+    void linkReset(bool* resetPointer){
+        _resetPointer = resetPointer;
+    }
     
 
 }

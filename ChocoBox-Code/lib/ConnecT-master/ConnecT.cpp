@@ -23,6 +23,8 @@ FirebaseData fbdo2;
 FirebaseAuth auth;
 FirebaseConfig config;
 
+int start_time = millis();
+
 void ConnecT::setDualMode(){
   WiFi.mode(WIFI_AP_STA);
 }
@@ -48,14 +50,22 @@ void ConnecT::setWiFi_STA(char* wifi_ssid, char* wifi_password){
     WiFi.begin(wifi_ssid, wifi_password);
     Serial.println("\nConnecting");
 
-    while(WiFi.status() != WL_CONNECTED){
+    while(WiFi.status() != WL_CONNECTED  && (millis() - start_time) < 10000){
         Serial.print(".");
         delay(100);
     }
 
-    Serial.println("\nConnected to the WiFi network");
-    Serial.print("Local ESP32 IP: ");
-    Serial.println(WiFi.localIP());
+    if(WiFi.status() != WL_CONNECTED ){
+      Serial.println("Unable to connect to WiFi");
+    }
+
+    else{
+      Serial.println("\nConnected to the WiFi network");
+      Serial.print("Local ESP32 IP: ");
+      Serial.println(WiFi.localIP());
+    }
+
+
 }
 
 
@@ -73,8 +83,14 @@ void ConnecT::setWiFi_wokwi()
 
 
 
-void ConnecT::setFirebase(char* api_key, char* database_url, char* user_email, char* user_password)
-{
+void ConnecT::setFirebase(char* api_key, char* database_url, char* user_email, char* user_password){
+
+  // Check if Wi-Fi is connected
+  if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("No Wi-Fi connection. FireBase initialization skipped.");
+      return;
+  }
+
   unsigned long sendDataPrevMillis = 0;
   int count = 0;
 
@@ -104,6 +120,12 @@ void ConnecT::setFiresense(char* basePath, char* deviceID, int timeZone, int las
  int logInterval, long dataRetainingPeriod){
 
     Serial.println("Espere a que FireSense configure sus sensores...");
+
+    // Check if Wi-Fi is connected
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("No Wi-Fi connection. FireSense initialization skipped.");
+        return;
+    }
 
     // Set up the config
     fsConfig.basePath = basePath;

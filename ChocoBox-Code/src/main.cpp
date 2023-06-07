@@ -208,7 +208,10 @@ void setup() {
   connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
 
   //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
-  updateEnvironment();
+  if (WiFi.status() == WL_CONNECTED) {
+      updateEnvironment();
+  }
+
 
   /* Se obtiene la información almacenada en memoria flash - Curvas a replicar */
   preferences.getBytes("vq_temp", vq_tempBuffer, preferences.getBytesLength("vq_temp"));

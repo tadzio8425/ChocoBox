@@ -69,6 +69,7 @@ float temperature_01 = 0; // Variable que almacena la temperatura
 float humidity_02 = 0; // Variable que almacena la humedad
 float temperature_02 = 0; // Variable que almacena la temperatura
 float ferm_time = 0; // Variable que almacena el tiempo de fermentación
+float ferm_time_hr = 0; // Variable que almacena el tiempo de fermentación en horas
 
 /* Variables de control */
 FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a recrear
@@ -141,6 +142,7 @@ void setup() {
   }
   else{
     ferm_time = preferences.getFloat("ferm_time");
+    ferm_time_hr = ferm_time/3600000;
   }
 
 
@@ -174,10 +176,10 @@ void setup() {
   connecT.addSensor(&temperature_01);
   connecT.addSensor(&humidity_02);
   connecT.addSensor(&temperature_02);
-  connecT.addSensor(&now);
+  connecT.addSensor(&ferm_time_hr);
 
   // Conexión a Firesense - Último que debe hacerse
-  connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 60*1000, 24*60*60); 
+  connecT.setFiresense("/Sensors", "Node1", -5, 60*1000, 60*1000, 20, 24*60*60); 
 
   //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
   updateEnvironment();
@@ -216,9 +218,9 @@ void loop() {
 
   /* Se almacena el tiempo de fermentación hasta el momento - Tiempo del dispositivo prendido */
   ferm_time = preferences.getFloat("ferm_time");
+  ferm_time_hr = ferm_time/3600000;
   float ferm_diff= now - preferences.getFloat("ferm_start");
-  float new_ferm_time = (ferm_time + ferm_diff);
-  preferences.putFloat("ferm_time", new_ferm_time);
+  preferences.putFloat("ferm_time", ferm_diff);
 
   
 }

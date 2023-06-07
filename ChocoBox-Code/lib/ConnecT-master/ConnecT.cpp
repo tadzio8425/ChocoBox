@@ -167,7 +167,7 @@ WebServer* ConnecT::getServerPointer(){
 
 
 void ConnecT::load_FsConfig(){
-  FireSense_Channel channel[5];
+  FireSense_Channel channel[7];
 
   channel[0].id = "HUMID1";
   channel[0].name = "Humidity sensor data";
@@ -216,4 +216,26 @@ void ConnecT::load_FsConfig(){
   channel[4].log = true;      // to store value to the database log
   channel[4].value_index = 4; // this the index of bound user variable which added with FireSense.addUserValue
   FireSense.addChannel(channel[4]);
+
+
+  channel[5].id = "desired_humidity";
+  channel[5].name = "Humedad Deseada";
+  channel[5].location = "Room1";
+  channel[5].type = Firesense_Channel_Type::Value;
+  channel[5].status = true;   // to store value to the database status
+  channel[5].log = true;      // to store value to the database log
+  channel[5].value_index = 5; // this the index of bound user variable which added with FireSense.addUserValue
+  FireSense.addChannel(channel[5]);
+
+
+  channel[6].id = "desired_temp";
+  channel[6].name = "Temperatura Deseada";
+  channel[6].location = "Room1";
+  channel[6].type = Firesense_Channel_Type::Value;
+  channel[6].status = true;   // to store value to the database status
+  channel[6].log = true;      // to store value to the database log
+  channel[6].value_index = 6; // this the index of bound user variable which added with FireSense.addUserValue
+  FireSense.addChannel(channel[6]);
+
+
 }

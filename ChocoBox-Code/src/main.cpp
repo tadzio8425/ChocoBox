@@ -13,8 +13,6 @@
 #include "SPIFFS.h"
 #include <Preferences.h>
 
-
-/* Variables de interpolación */
 std::vector<float> x;
 std::vector<float> v_temp;
 std::vector<float> v_humidity;
@@ -22,8 +20,12 @@ std::vector<float> xq;
 
 std::vector<float> vq_temp;
 std::vector<float> vq_humidity;
-float vq_tempBuffer[1000] = {};
-float vq_humidityBuffer[1000] = {};
+
+float vq_tempBuffer[200] = {};
+float vq_humidityBuffer[200] = {};
+
+float temperature_buffer[200] = {};
+float humidity_buffer[200] = {};
 
 
 /* Funciones de ayuda */
@@ -71,12 +73,13 @@ float temperature_02 = 0; // Variable que almacena la temperatura
 float ferm_time = 0; // Variable que almacena el tiempo de fermentación
 float ferm_time_hr = 0; // Variable que almacena el tiempo de fermentación en horas
 float prev_ferm_time = 0; // Variable que almacena el tiempo de fermentación previo
+int prev_index = -1; // Variable que almacena el índice previo de la interpolación
 
 /* Variables de control */
 FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a recrear
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
 float desiredTemperature = 0; // Variable que almacena la temperatura deseada
-float paso = 0.1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+float paso = 0.5; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 float now = 0; // Variable que almacena el tiempo actual
 
 
@@ -184,6 +187,8 @@ void setup() {
   connecT.addSensor(&humidity_02);
   connecT.addSensor(&temperature_02);
   connecT.addSensor(&ferm_time_hr);
+  connecT.addSensor(&desiredHumidity);
+  connecT.addSensor(&desiredTemperature);
 
   // Conexión a Firesense - Último que debe hacerse
   connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
@@ -195,12 +200,22 @@ void setup() {
   preferences.getBytes("vq_temp", vq_tempBuffer, preferences.getBytesLength("vq_temp"));
   preferences.getBytes("vq_humidity", vq_humidityBuffer, preferences.getBytesLength("vq_humidity"));
 
+  /* Se instancian los arreglos en memoria flash que almacenaran los datos de humedad y temperatura reales */
+  if(!preferences.isKey("data_tem") && !preferences.isKey("data_hum")){
+    preferences.putBytes("data_tem", temperature_buffer, sizeof(temperature_buffer));
+    preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
+  }
 
 }
 
 void loop() {
   /* Se actualiza el tiempo actual */
   now = millis();
+
+  /* Se establece el valor deseado de temperatura y humedad según la gráfica */
+  int index = (int) (ferm_time_hr/paso);
+  desiredTemperature = vq_tempBuffer[index];
+  desiredHumidity = vq_humidityBuffer[index];
 
   /* Lectura de los sensores */
   humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
@@ -231,11 +246,33 @@ void loop() {
   if (prev_ferm_time == 0 ){
     prev_ferm_time = ferm_time;
   }
-
   preferences.putFloat("ferm_time", ferm_diff + prev_ferm_time);
 
-   /* Corre FireSense (último en el loop)*/
+
+  /* Se escribe el archivo con la data recolectada - Únicament con el cambio de índice */
+   if(prev_index != index){
+      Serial.println("Almacenando datos...");
+
+      prev_index = index;
+
+      preferences.getBytes("data_tem", temperature_buffer, preferences.getBytesLength("data_tem"));
+      preferences.getBytes("data_hum", humidity_buffer, preferences.getBytesLength("data_hum"));
+
+      temperature_buffer[index] = (temperature_01+temperature_02)/2;
+      humidity_buffer[index] = (humidity_01+humidity_02)/2;
+
+      preferences.putBytes("data_tem", temperature_buffer, sizeof(temperature_buffer));
+      preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
+   }
+
+ 
+
+
+  /* Corre FireSense (último en el loop)*/
    connecT.FS_run();
+
+
+
 
   
 

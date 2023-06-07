@@ -79,6 +79,12 @@ float desiredTemperature = 0; // Variable que almacena la temperatura deseada
 float paso = 0.1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 float now = 0; // Variable que almacena el tiempo actual
 
+
+/* Control del log - Persistencia de los datos */
+int log_interval = (60*1000) * 30; // Intervalo de tiempo entre cada registro en la base de datos (en milisegundos)
+long log_persistence = (24*60*60) * 30; // Tiempo de persistencia de los datos en la base de datos (en segundos) 
+
+
 /* Objetos */
 ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
 Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador
@@ -180,7 +186,7 @@ void setup() {
   connecT.addSensor(&ferm_time_hr);
 
   // Conexión a Firesense - Último que debe hacerse
-  connecT.setFiresense("/Sensors", "Node1", 3, 60*1000, 60*1000, 24*60*60); 
+  connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
 
   //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
   updateEnvironment();
@@ -197,10 +203,10 @@ void loop() {
   now = millis();
 
   /* Lectura de los sensores */
- // humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
-  //temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura
- // humidity_02 = dht_02.readHumidity(); // Lectura de la humedad
-  //temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura
+  humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
+  temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura
+  humidity_02 = dht_02.readHumidity(); // Lectura de la humedad
+  temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura
 
   /* Control de la humedad */
   humidityController.update();
@@ -227,13 +233,6 @@ void loop() {
   }
 
   preferences.putFloat("ferm_time", ferm_diff + prev_ferm_time);
-
-
-  // DATOS DE PRUEBA (ELIMINAR)
-  humidity_01 = 50;
-  humidity_02 = 50;
-  temperature_01 = 25;
-  temperature_02 = 25;
 
    /* Corre FireSense (último en el loop)*/
    connecT.FS_run();

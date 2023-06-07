@@ -24,11 +24,15 @@ std::vector<float> xq;
 std::vector<float> vq_temp;
 std::vector<float> vq_humidity;
 
-float vq_tempBuffer[200] = {};
-float vq_humidityBuffer[200] = {};
+const int numOfHours = 96; // Número de horas que dura la fermentación
+const float paso = 0.5; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+const int buffer_size = numOfHours/paso;
 
-float temperature_buffer[200] = {};
-float humidity_buffer[200] = {};
+float vq_tempBuffer[buffer_size] = {};
+float vq_humidityBuffer[buffer_size] = {};
+
+float temperature_buffer[buffer_size] = {};
+float humidity_buffer[buffer_size] = {};
 
 
 /* Funciones de ayuda */
@@ -79,7 +83,6 @@ int prev_index = -1; // Variable que almacena el índice previo de la interpolac
 FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a recrear
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
 float desiredTemperature = 0; // Variable que almacena la temperatura deseada
-float paso = 0.5; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 float now = 0; // Variable que almacena el tiempo actual
 
 
@@ -167,6 +170,7 @@ void setup() {
   dht_02.begin(); // Configuración del sensor DHT
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
   temperatureController.setDesiredTemperature(&desiredTemperature); // Configuración de la temperatura deseada
+  ChocoBoxREST::_bufferSize = buffer_size; // Configuración del tamaño del buffer de datos
 
   /* Configuración de la pantalla LCD */
   lcd.init();

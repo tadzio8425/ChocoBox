@@ -3,8 +3,8 @@
 #include <ArduinoJson.h>
 
 // JSON data buffer
-StaticJsonDocument<1000> jsonDocument;
-char buffer[1000];
+StaticJsonDocument<10000> jsonDocument;
+char buffer[10000];
 
 
 //Funciones de manejo JSON Auxiliares
@@ -22,6 +22,7 @@ namespace ChocoBoxREST{
     WebServer* _serverPointer;
     float* _temperatureArray;
     float* _humidityArray;
+    int _bufferSize;
 
     void add_json_object(char *tag, float value, char *unit) {
         JsonObject obj = jsonDocument.createNestedObject();
@@ -30,21 +31,21 @@ namespace ChocoBoxREST{
         obj["unit"] = unit; 
     }
 
+    void setBufferSize(int bufferSize){
+        _bufferSize = bufferSize;
+    }
+
     void linkServer(WebServer* serverPointer){
         _serverPointer = serverPointer;
     }
 
     // MÉTODOS GET
     void getTemperature(){
-        Serial.println("GET /temperature");
-        Serial.println(_temperatureArray[0]);
         jsonDocument.clear(); // Clear the JSON document before populating it
-        JsonArray array = jsonDocument.createNestedArray(); // Create a nested array in the JSON document
-        for (int i = 0; i < sizeof(_temperatureArray)/sizeof(float); i++) {
-            JsonObject obj = array.createNestedObject();
-            obj["type"] = "temperature";
-            obj["value"] = _temperatureArray[i];
-            obj["unit"] = "C";
+        JsonArray array = jsonDocument.to<JsonArray>(); // Create a JSON array in the JSON document
+
+        for (int i = 0; i < _bufferSize; i++) {
+            array.add(_temperatureArray[i]);
         }
 
         serializeJson(jsonDocument, buffer); // Serialize the JSON document to the buffer
@@ -52,22 +53,16 @@ namespace ChocoBoxREST{
     }
 
     void getHumidity(){
-        Serial.println("GET /humidity");
         jsonDocument.clear(); // Clear the JSON document before populating it
-        JsonArray array = jsonDocument.createNestedArray(); // Create a nested array in the JSON document
+        JsonArray array = jsonDocument.to<JsonArray>(); // Create a JSON array in the JSON document
 
-        for (int i = 0; i < sizeof(_humidityArray)/sizeof(float); i++) {
-            JsonObject obj = array.createNestedObject();
-            obj["type"] = "humidity";
-            obj["value"] = _humidityArray[i];
-            obj["unit"] = "%";
+        for (int i = 0; i < _bufferSize; i++) {
+            array.add(_humidityArray[i]);
         }
 
         serializeJson(jsonDocument, buffer); // Serialize the JSON document to the buffer
         _serverPointer->send(200, "application/json", buffer);
     }
-
-
 
     void linkTemperature(float temperatureArray[]){
       _temperatureArray = temperatureArray;

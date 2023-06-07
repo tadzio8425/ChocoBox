@@ -25,7 +25,7 @@ std::vector<float> vq_temp;
 std::vector<float> vq_humidity;
 
 const int numOfHours = 96; // Número de horas que dura la fermentación
-const float paso = 0.5; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+const float paso = 0.3; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 const int buffer_size = numOfHours/paso;
 
 float vq_tempBuffer[buffer_size] = {};
@@ -92,7 +92,7 @@ long log_persistence = (24*60*60) * 30; // Tiempo de persistencia de los datos e
 
 
 /* Objetos */
-ConnecT connecT; // Instancia de la clase ConnecT: Permite la conexión a internet y la comunicación con el servidor web
+ConnecT connecT; // Instancia de la clase ConnecT: Permite la cone1pasoxión a internet y la comunicación con el servidor web
 Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control del humidificador
 Heater heater; // Instancia de la clase Heater: Permite el control del calentador
 DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
@@ -234,10 +234,11 @@ void loop() {
 
 
   /* Lectura de los sensores */
-  humidity_01 = index;//dht_01.readHumidity(); // Lectura de la humedad
-  temperature_01 = index;//dht_01.readTemperature(); // Lectura de la temperatura
-  humidity_02 = index;//dht_02.readHumidity(); // Lectura de la humedad
-  temperature_02 = index;//dht_02.readTemperature(); // Lectura de la temperatura
+  humidity_01 = desiredHumidity;//dht_01.readHumidity(); // Lectura de la humedad
+  humidity_02 = desiredHumidity;//dht_02.readHumidity(); // Lectura de la humedad
+
+  temperature_01 = desiredTemperature;//dht_01.readTemperature(); // Lectura de la temperatura
+  temperature_02 = desiredTemperature;//dht_02.readTemperature(); // Lectura de la temperatura
 
   /* Control de la humedad */
   humidityController.update();

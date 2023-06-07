@@ -35,6 +35,7 @@ float temperature_buffer[buffer_size] = {};
 float humidity_buffer[buffer_size] = {};
 
 
+
 /* Funciones de ayuda */
 void printVector(const std::vector<float>& vec) {
     for (float value : vec) {
@@ -190,7 +191,7 @@ void setup() {
   connecT.setDualMode();
   connecT.setWiFi_AP("ChocoBox", "chocoBox");
   connecT.setWebServer(80); // Creación del servidor web en el puerto 80
-  connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi
+  connecT.setWiFi_STA("IncuPlant", "eusebio8425"); // Conexión a la red WiFi
   connecT.setFirebase("AIzaSyD2ldqxOE9shGk3XsHtYvBmwjK3NqKP0ew", "https://chocobox-73f90-default-rtdb.firebaseio.com", "juanse8425@gmail.com", "chocoBox"); // Conexión a la base de datos de Firebase
 
 

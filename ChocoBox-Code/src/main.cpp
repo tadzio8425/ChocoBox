@@ -87,7 +87,8 @@ float desiredTemperature = 0; // Variable que almacena la temperatura deseada
 float now = 0; // Variable que almacena el tiempo actual
 bool* resetPointer;
 bool defaultReset = false; 
-
+bool wifiAtSetup = true;
+float timer_start = 0;
 
 /* Control del log - Persistencia de los datos */
 int log_interval = (60*1000) * 30; // Intervalo de tiempo entre cada registro en la base de datos (en milisegundos)
@@ -191,7 +192,7 @@ void setup() {
   connecT.setDualMode();
   connecT.setWiFi_AP("ChocoBox", "chocoBox");
   connecT.setWebServer(80); // Creación del servidor web en el puerto 80
-  connecT.setWiFi_STA("IncuPlant", "eusebio8425"); // Conexión a la red WiFi
+  connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi  
   connecT.setFirebase("AIzaSyD2ldqxOE9shGk3XsHtYvBmwjK3NqKP0ew", "https://chocobox-73f90-default-rtdb.firebaseio.com", "juanse8425@gmail.com", "chocoBox"); // Conexión a la base de datos de Firebase
 
 
@@ -210,6 +211,10 @@ void setup() {
   //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
   if (WiFi.status() == WL_CONNECTED) {
       updateEnvironment();
+  }
+  else{
+      wifiAtSetup = false;
+      timer_start = millis();
   }
 
 
@@ -331,5 +336,21 @@ void loop() {
 
   /* Corre FireSense (último en el loop)*/
    connecT.FS_run();  
+
+
+   /* En dado caso de no haberse conectado nunca a WiFi, lo intenta cada 15 minutos */
+   if(!wifiAtSetup && millis() - timer_start > (1000 * 60) * 15){
+      Serial.println("Intentando reconectar a internet...");  
+      connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi
+      connecT.setFirebase("AIzaSyD2ldqxOE9shGk3XsHtYvBmwjK3NqKP0ew", "https://chocobox-73f90-default-rtdb.firebaseio.com", "juanse8425@gmail.com", "chocoBox"); // Conexión a la base de datos de Firebase
+      connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
+      
+      if(WiFi.status() == WL_CONNECTED){
+          wifiAtSetup = true;
+      }
+   }
+   if (millis() - timer_start > (1000 * 60) * 15){
+      timer_start = millis();
+   }
 
 }

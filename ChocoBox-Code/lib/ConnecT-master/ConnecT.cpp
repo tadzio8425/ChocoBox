@@ -23,8 +23,6 @@ FirebaseData fbdo2;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-int start_time = millis();
-
 void ConnecT::setDualMode(){
   WiFi.mode(WIFI_AP_STA);
 }
@@ -50,19 +48,13 @@ void ConnecT::setWiFi_STA(char* wifi_ssid, char* wifi_password){
     WiFi.begin(wifi_ssid, wifi_password);
     Serial.println("\nConnecting");
 
-    while(WiFi.status() != WL_CONNECTED  && (millis() - start_time) < 10000){
-        Serial.print(".");
-        delay(100);
-    }
-
-    if(WiFi.status() != WL_CONNECTED ){
-      Serial.println("Unable to connect to WiFi");
-    }
-
-    else{
-      Serial.println("\nConnected to the WiFi network");
-      Serial.print("Local ESP32 IP: ");
-      Serial.println(WiFi.localIP());
+    // Wait for connection result without blocking
+    if (WiFi.waitForConnectResult() == WL_CONNECTED) {
+        Serial.println("Connected to the WiFi network");
+        Serial.print("Local ESP32 IP: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        Serial.println("Unable to connect to WiFi");
     }
 
 

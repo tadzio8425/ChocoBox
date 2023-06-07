@@ -14,11 +14,12 @@ class ConnecT
     void setWiFi_wokwi();
     void setFirebase(char* api_key, char* database_url, char* user_email, char* user_password);
     void setFiresense(char* basePath, char* deviceID, int timeZone, int lastSeenInterval,
-                      int logInterval, int conditionProcessInterval, long dataRetainingPeriod);
+ int logInterval, long dataRetainingPeriod);
     FirebaseJson* getJSON(String path);
     void addSensor(float* sensor_value);
     void sendFloat(String path, float data);
     void setWebServer(int port);
+    void FS_run();
     void addGETtoWeb(String path, void (*function)());
     void addPUTtoWeb(String path, void (*function)());
     void load_FsConfig();

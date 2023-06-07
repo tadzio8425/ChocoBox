@@ -101,17 +101,18 @@ void ConnecT::sendFloat(String path, float data){
 }
 
 void ConnecT::setFiresense(char* basePath, char* deviceID, int timeZone, int lastSeenInterval,
- int logInterval, int conditionProcessInterval, long dataRetainingPeriod){
+ int logInterval, long dataRetainingPeriod){
 
     Serial.println("Espere a que FireSense configure sus sensores...");
 
+    // Set up the config
     fsConfig.basePath = basePath;
-    fsConfig.deviceId = deviceID;
+    fsConfig.deviceId = "Node1";
     fsConfig.time_zone = timeZone; // change for your local time zone
     fsConfig.daylight_offset_in_sec = 0;
     fsConfig.last_seen_interval = lastSeenInterval;     // store timestamp
-    fsConfig.log_interval = logInterval;           // store log data every 60 seconds
-    fsConfig.condition_process_interval = conditionProcessInterval;    // check conditions every 20 mSec
+    fsConfig.log_interval =logInterval;           // store log data every 60 seconds
+    fsConfig.condition_process_interval = 20;    // check conditions every 20 mSec
     fsConfig.dataRetainingPeriod = dataRetainingPeriod; // keep the log data for 1 day
     fsConfig.shared_fbdo = &fbdo1;               // for store/restore the data
     fsConfig.stream_fbdo = &fbdo2;               // for stream, if set this stream_fbdo to nullptr, the stream will connected through shared FirebaseData object.
@@ -141,6 +142,10 @@ void ConnecT::setWebServer(int port)
 {
   _serverPointer = new WebServer(port);
   _serverPointer->enableCORS();
+}
+
+void ConnecT::FS_run(){
+  FireSense.run();
 }
 
 

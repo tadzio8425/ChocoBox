@@ -1,6 +1,5 @@
 #include "Arduino.h"
 #include <vector>
-#include <cmath>
 #ifndef Interpol_h
 #define Interpol_h
 

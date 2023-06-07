@@ -1,7 +1,6 @@
 #include "Arduino.h"
 #include <Interpol.h>
 #include <vector>
-#include <cmath>
 
 std::vector<float> Interpol::generateXq(float start, float end, float step) {
     std::vector<float> xq;

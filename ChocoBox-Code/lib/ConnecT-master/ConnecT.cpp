@@ -23,15 +23,16 @@ FirebaseData fbdo2;
 FirebaseAuth auth;
 FirebaseConfig config;
 
+void ConnecT::setDualMode(){
+  WiFi.mode(WIFI_AP_STA);
+}
+
 void ConnecT::setWiFi_AP(char* wifi_ssid, char* wifi_password)
 {
   /* Put IP Address details */
   IPAddress local_ip(192,168,1,1);
   IPAddress gateway(192,168,1,1);
   IPAddress subnet(255,255,255,0);
-
-  WiFi.mode(WIFI_AP);
-
   WiFi.softAP(wifi_ssid, wifi_password);
   WiFi.softAPConfig(local_ip, gateway, subnet);
   delay(100);
@@ -44,7 +45,6 @@ void ConnecT::setWiFi_AP(char* wifi_ssid, char* wifi_password)
 
 
 void ConnecT::setWiFi_STA(char* wifi_ssid, char* wifi_password){
-    WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid, wifi_password);
     Serial.println("\nConnecting");
 

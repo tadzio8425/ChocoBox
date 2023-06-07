@@ -11,6 +11,7 @@ class ConnecT
   public:
     void setWiFi_AP(char* wifi_ssid, char* wifi_password);
     void setWiFi_STA(char* wifi_ssid, char* wifi_password);
+    void setDualMode();
     void setWiFi_wokwi();
     void setFirebase(char* api_key, char* database_url, char* user_email, char* user_password);
     void setFiresense(char* basePath, char* deviceID, int timeZone, int lastSeenInterval,

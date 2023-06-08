@@ -63,12 +63,12 @@ void getVectorsFromJson(FirebaseJson* json, std::vector<float>& x, std::vector<f
 }
 
 /* Pines */
-#define PIN_HUM 23 // Pin del Humidificador
+#define PIN_HUM 27 // Pin del Humidificador
 #define PIN_HEAT 24 // Pin del Calentador
 
 #define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321 - SDA: 21, SCL: 22
-#define DHTPIN_01 18 // Pin del sensor DHT 01
-#define DHTPIN_02 19 // Pin del sensor DHT 02
+#define DHTPIN_01 4 // Pin del sensor DHT 01
+#define DHTPIN_02 2 // Pin del sensor DHT 02
 
 /* Sensores -  Variables */
 float humidity_01 = 0; // Variable que almacena la humedad

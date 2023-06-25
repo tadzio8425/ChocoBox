@@ -13,6 +13,7 @@
 #include "SPIFFS.h"
 #include <Preferences.h>
 #include <ChocoBoxREST.h>
+#include <SD.h>
 
 using namespace ChocoBoxREST;
 
@@ -25,7 +26,7 @@ std::vector<float> vq_temp;
 std::vector<float> vq_humidity;
 
 const int numOfHours = 336; // Número de horas que dura la fermentación
-const float paso = 1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+const float paso = 0.1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 const int buffer_size = numOfHours/paso;
 
 float vq_tempBuffer[buffer_size] = {};
@@ -70,21 +71,31 @@ void getVectorsFromJson(FirebaseJson* json, std::vector<float>& x, std::vector<f
 #define DHTPIN_01 4 // Pin del sensor DHT 01
 #define DHTPIN_02 2 // Pin del sensor DHT 02
 
+#define chipSelect 5
+
+//Arhcivo tarjeta SD
+
+
+
+
+//IMPORTANTE - VARIABLE QUE HABILITA EL WIFI
+bool useWiFi = false;
+
 /* Sensores -  Variables */
 float humidity_01 = 0; // Variable que almacena la humedad
 float temperature_01 = 0; // Variable que almacena la temperatura
 float humidity_02 = 0; // Variable que almacena la humedad
 float temperature_02 = 0; // Variable que almacena la temperatura
-float ferm_time = 0; // Variable que almacena el tiempo de fermentación
+uint32_t ferm_time = 0; // Variable que almacena el tiempo de fermentación
 float ferm_time_hr = 0; // Variable que almacena el tiempo de fermentación en horas
-float prev_ferm_time = 0; // Variable que almacena el tiempo de fermentación previo
+uint32_t prev_ferm_time = 0; // Variable que almacena el tiempo de fermentación previo
 int prev_index = -1; // Variable que almacena el índice previo de la interpolación
 
 /* Variables de control */
 FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a recrear
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
 float desiredTemperature = 0; // Variable que almacena la temperatura deseada
-float now = 0; // Variable que almacena el tiempo actual
+uint32_t now = 0; // Variable que almacena el tiempo actual
 bool* resetPointer;
 bool defaultReset = false; 
 bool wifiAtSetup = true;
@@ -108,6 +119,9 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: 
 Interpol interpol; // Instancia de la clase Interpol: Permite la interpolación de los datos
 Preferences preferences; // Instancia de la clase Preferences: Permite el almacenamiento de datos en la memoria flash
 
+
+
+char dateBuff[20];
 
 /* Funciones */
 
@@ -149,20 +163,30 @@ void setup() {
   /* Inicialización apuntadores */
   resetPointer = &defaultReset; 
 
+  /*Configuración tarjeta SD*/
+  Serial.print("Iniciando tajeta SD...");
+  pinMode(SS, OUTPUT);
+  if (!SD.begin(chipSelect)) {
+    Serial.println("La tarjeta falló");
+    // don't do anything more:
+    while (1) ;
+  }
+  Serial.println("SD inicializada.");
+
   /* Conexión con el RTC */
   rtc.begin();
-  now = millis();
+  now = rtc.now().unixtime();
 
   preferences.begin("chocoBox", false);  // Se inicia la memoria flash
 
   /* Se ingresa la hora en que inició la fermentación */
-  preferences.putFloat("ferm_start", now);
+  preferences.putULong("ferm_start", now);
 
   if(!preferences.isKey("ferm_time")){
-    preferences.putFloat("ferm_time", 0);
+    preferences.putULong("ferm_time", 0);
   }
   else{
-    ferm_time = preferences.getFloat("ferm_time");
+    ferm_time = preferences.getULong("ferm_time");
     ferm_time_hr = ferm_time/3600000;
   }
 
@@ -182,40 +206,48 @@ void setup() {
 
   /* Configuración de la pantalla LCD */
   lcd.init();
+  lcd.clear();
   lcd.backlight();
   lcd.setCursor(0, 0);
   lcd.print("Humidity: ");
   lcd.setCursor(0, 1);
   lcd.print("Temperature: ");
+  lcd.setCursor(0, 3);
+  lcd.print("Time: ");
 
   /* Configuración del IOT */
   connecT.setDualMode();
   connecT.setWiFi_AP("ChocoBox", "chocoBox");
   connecT.setWebServer(80); // Creación del servidor web en el puerto 80
-  connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi  
-  connecT.setFirebase("AIzaSyD2ldqxOE9shGk3XsHtYvBmwjK3NqKP0ew", "https://chocobox-73f90-default-rtdb.firebaseio.com", "juanse8425@gmail.com", "chocoBox"); // Conexión a la base de datos de Firebase
 
+  if(useWiFi){
+    connecT.setWiFi_STA("COMPETENCE", "Mafu2408"); // Conexión a la red WiFi  
+    connecT.setFirebase("AIzaSyD2ldqxOE9shGk3XsHtYvBmwjK3NqKP0ew", "https://chocobox-73f90-default-rtdb.firebaseio.com", "juanse8425@gmail.com", "chocoBox"); // Conexión a la base de datos de Firebase
+  
+  
+    // Se agregan los sensores a Firesense
+    connecT.addSensor(&humidity_01);
+    connecT.addSensor(&temperature_01);
+    connecT.addSensor(&humidity_02);
+    connecT.addSensor(&temperature_02);
+    connecT.addSensor(&ferm_time_hr);
+    connecT.addSensor(&desiredHumidity);
+    connecT.addSensor(&desiredTemperature);
 
-  // Se agregan los sensores a Firesense
-  connecT.addSensor(&humidity_01);
-  connecT.addSensor(&temperature_01);
-  connecT.addSensor(&humidity_02);
-  connecT.addSensor(&temperature_02);
-  connecT.addSensor(&ferm_time_hr);
-  connecT.addSensor(&desiredHumidity);
-  connecT.addSensor(&desiredTemperature);
+    // Conexión a Firesense - Último que debe hacerse
+    connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
 
-  // Conexión a Firesense - Último que debe hacerse
-  connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
-
-  //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
-  if (WiFi.status() == WL_CONNECTED) {
-      updateEnvironment();
+    //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
+    if (WiFi.status() == WL_CONNECTED) {
+        updateEnvironment();
+    }
+    else{
+        wifiAtSetup = false;
+        timer_start = millis();
+    }
   }
-  else{
-      wifiAtSetup = false;
-      timer_start = millis();
-  }
+
+
 
 
   /* Se obtiene la información almacenada en memoria flash - Curvas a replicar */
@@ -245,7 +277,7 @@ void setup() {
 
 void loop() {
   /* Se actualiza el tiempo actual */
-  now = millis();
+  now = rtc.now().unixtime();
 
 
   /* Se revisa si se desea resetear la fermentación */
@@ -255,8 +287,9 @@ void loop() {
 
     *resetPointer = false;
     
-    //Se pone ferm_time en 0
-    preferences.putFloat("ferm_time", 0);
+    //Se pone ferm_time en 0 y ferm_start en now
+    preferences.putULong("ferm_time", 0);
+    preferences.putULong("ferm_start", now);
     ferm_time = 0;
     ferm_time_hr = 0;
 
@@ -275,7 +308,7 @@ void loop() {
 
 
   /* Se establece el valor deseado de temperatura y humedad según la gráfica */
-  int index = (int) (ferm_time_hr/paso);
+  int index = (int) (ferm_time/(paso*3600));
   desiredTemperature = vq_tempBuffer[index];
   desiredHumidity = vq_humidityBuffer[index];
 
@@ -295,21 +328,27 @@ void loop() {
   /* Actualización de la pantalla LCD */
   lcd.setCursor(10, 0);
   lcd.print((humidity_01+humidity_02)/2);
+  lcd.print("%");
+
   lcd.setCursor(13, 1);
   lcd.print((temperature_01+temperature_02)/2);
+  lcd.print(" C");
+
+  lcd.setCursor(6, 3);
+  lcd.print(ferm_time);
+
 
   /* Se almacena el instante actual de funcionamiento de la fermentación */
-  preferences.putFloat("ferm_now", now);
+  preferences.putULong("ferm_now", now);
 
   /* Se almacena el tiempo de fermentación hasta el momento - Tiempo del dispositivo prendido */
-  ferm_time = preferences.getFloat("ferm_time");
-  ferm_time_hr = ferm_time/3600000;
-  float ferm_diff= now - preferences.getFloat("ferm_start");
+  ferm_time = preferences.getULong("ferm_time");
+  uint32_t ferm_diff= now - preferences.getULong("ferm_start");
   
   if (prev_ferm_time == 0 ){
     prev_ferm_time = ferm_time;
   }
-  preferences.putFloat("ferm_time", ferm_diff + prev_ferm_time);
+  preferences.putULong("ferm_time", ferm_diff + prev_ferm_time);
 
 
   /* Se escribe el archivo con la data recolectada - Únicament con el cambio de índice */
@@ -352,5 +391,7 @@ void loop() {
    if (millis() - timer_start > (1000 * 60) * 15){
       timer_start = millis();
    }
+
+   delay(100);
 
 }

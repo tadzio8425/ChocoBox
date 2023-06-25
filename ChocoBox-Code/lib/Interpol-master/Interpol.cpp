@@ -88,7 +88,7 @@ std::vector<float> Interpol::cubicSpline(const std::vector<float>& x, const std:
             rango.push_back(jx);
         }
 
-        for (int pasos = 1; pasos < rango.size(); pasos++) {
+        for (int pasos = 0; pasos < rango.size(); pasos++) {
             float jx = inicio + paso * pasos;
             if (jx == inicio) {
                 vq.push_back(v[i]);

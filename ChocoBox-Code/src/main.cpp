@@ -14,6 +14,9 @@
 #include <Preferences.h>
 #include <ChocoBoxREST.h>
 #include <SD.h>
+#include <Adafruit_GFX.h>
+#include <SPI.h>
+
 
 using namespace ChocoBoxREST;
 
@@ -29,39 +32,67 @@ const int numOfHours = 336; // Número de horas que dura la fermentación
 const float paso = 0.1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 const int buffer_size = numOfHours/paso;
 
-float vq_tempBuffer[buffer_size] = {};
-float vq_humidityBuffer[buffer_size] = {};
-
-float temperature_buffer[buffer_size] = {};
-float humidity_buffer[buffer_size] = {};
-
+//Archivos tarjeta SD
+File dataFile;
+File environmentFile;
+File splineFile;
 
 
 /* Funciones de ayuda */
 void printVector(const std::vector<float>& vec) {
     for (float value : vec) {
-        Serial.print(value);
+        Serial.print(value, 3);
         Serial.print(",");
     }
     Serial.println();
 }
 
-void getVectorsFromJson(FirebaseJson* json, std::vector<float>& x, std::vector<float>& v_temp, std::vector<float>& v_humidity) {
-    size_t arraySize = json->iteratorBegin();
-    for (size_t i = 0; i < arraySize; i+=3) {
-        int type;
-        String temperature, humidity;
-        String key, value;
 
-        json->iteratorGet(i, type, key, value);
-        float time = key.toFloat();
-        json->iteratorGet(i+1, type, key, humidity);
-        json->iteratorGet(i+2, type, key, temperature);
-        x.push_back(time);
-        v_temp.push_back(temperature.toFloat());
-        v_humidity.push_back(humidity.toFloat());
+void extractEnvironmentData(const String& data, std::vector<float>& hourVec,
+                 std::vector<float>& temperatureVec, std::vector<float>& humidityVec) {
+    int startIndex = 0;
+    int endIndex = data.indexOf('\n');
+    bool isFirstLine = true;  // Flag to skip the first line
+    while (endIndex != -1) {
+        String line = data.substring(startIndex, endIndex);
+        int commaIndex1 = line.indexOf(',');
+        int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
+        if (!isFirstLine && commaIndex1 != -1 && commaIndex2 != -1) {
+            float hour = line.substring(0, commaIndex1).toFloat();
+            float temperature = line.substring(commaIndex1 + 1, commaIndex2).toFloat();
+            float humidity = line.substring(commaIndex2 + 1).toFloat();
+            hourVec.push_back(hour);
+            temperatureVec.push_back(temperature);
+            humidityVec.push_back(humidity);
+        }
+        isFirstLine = false;
+        startIndex = endIndex + 1;
+        endIndex = data.indexOf('\n', startIndex);
+        if (endIndex == -1 && startIndex < data.length()) {
+            // Handle the last line if it doesn't end with a newline character
+            endIndex = data.length();
+        }
     }
 }
+
+
+void sendSplineSD(const std::vector<float>& hourVec,
+                          const std::vector<float>& temperatureVec,
+                          const std::vector<float>& humidityVec) {
+    String dataString;
+    for (size_t i = 0; i < hourVec.size(); ++i) {
+        dataString += String(hourVec[i]) + "," + String(temperatureVec[i]) + "," +
+                      String(humidityVec[i]) + "\n";
+    }
+
+    splineFile = SD.open("/spline.txt", FILE_WRITE);
+    splineFile.print(dataString);
+    splineFile.flush();
+    delay(100);
+    splineFile.close();
+}
+
+
 
 /* Pines */
 #define PIN_HUM 27 // Pin del Humidificador
@@ -72,10 +103,6 @@ void getVectorsFromJson(FirebaseJson* json, std::vector<float>& x, std::vector<f
 #define DHTPIN_02 2 // Pin del sensor DHT 02
 
 #define chipSelect 5
-
-//Arhcivo tarjeta SD
-
-
 
 
 //IMPORTANTE - VARIABLE QUE HABILITA EL WIFI
@@ -92,7 +119,6 @@ uint32_t prev_ferm_time = 0; // Variable que almacena el tiempo de fermentación
 int prev_index = -1; // Variable que almacena el índice previo de la interpolación
 
 /* Variables de control */
-FirebaseJson* environment; // Variable que almacena el JSON con el ambiente a recrear
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
 float desiredTemperature = 0; // Variable que almacena la temperatura deseada
 uint32_t now = 0; // Variable que almacena el tiempo actual
@@ -119,33 +145,36 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: 
 Interpol interpol; // Instancia de la clase Interpol: Permite la interpolación de los datos
 Preferences preferences; // Instancia de la clase Preferences: Permite el almacenamiento de datos en la memoria flash
 
-
-
 char dateBuff[20];
 
 /* Funciones */
 
-void putVector(char* key, std::vector<float>& vq) {
-    size_t size = vq.size();
-    float vq_array[size];
-    std::copy(vq.begin(), vq.end(), vq_array);
-    vq.clear();  // Clear the vector to save memory
-
-    preferences.putBytes(key, vq_array, sizeof(vq_array));
-}
-
-
 void updateEnvironment(){
 
-  environment = connecT.getJSON("/environment");
-  getVectorsFromJson(environment, x, v_temp, v_humidity);
+  String environment_str;
+
+  environmentFile = SD.open("/environment.txt");
+  if (environmentFile) {
+    while (environmentFile.available()) {
+    	environment_str = environmentFile.readString();
+    }
+    // close the file:
+    environmentFile.close();
+  } else {
+    Serial.println("Error abriendo environment.txt");
+  }
+
+  //Se actualizan los vectores de la interpolación
+  extractEnvironmentData(environment_str, x, v_temp, v_humidity);
+
+  //TODO- OBTENER X, V_TEMP Y V_HUMID
   xq = interpol.generateXq(x[0], x[x.size()-1], paso);
 
   vq_temp = interpol.cubicSpline(x, v_temp, xq);
   vq_humidity = interpol.cubicSpline(x, v_humidity, xq);
 
-  putVector("vq_temp", vq_temp);
-  putVector("vq_humidity", vq_humidity);
+  /*TO-DO: Subir a la tarjeta SD el resultado (vq_temp y vq_humidity)*/
+  sendSplineSD(xq, vq_temp, vq_humidity);
 
   x.clear();
   v_temp.clear();
@@ -163,6 +192,7 @@ void setup() {
   /* Inicialización apuntadores */
   resetPointer = &defaultReset; 
 
+
   /*Configuración tarjeta SD*/
   Serial.print("Iniciando tajeta SD...");
   pinMode(SS, OUTPUT);
@@ -172,6 +202,13 @@ void setup() {
     while (1) ;
   }
   Serial.println("SD inicializada.");
+
+  /*Apertura de archivo de dataLog en la SD */
+  dataFile = SD.open("/datalog.txt", FILE_APPEND);
+  if (! dataFile) {
+    Serial.println("error opening datalog.txt");
+    while (1) ;
+  }
 
   /* Conexión con el RTC */
   rtc.begin();
@@ -220,50 +257,14 @@ void setup() {
   connecT.setWiFi_AP("ChocoBox", "chocoBox");
   connecT.setWebServer(80); // Creación del servidor web en el puerto 80
 
-  if(useWiFi){
-    connecT.setWiFi_STA("COMPETENCE", "Mafu2408"); // Conexión a la red WiFi  
-    connecT.setFirebase("AIzaSyD2ldqxOE9shGk3XsHtYvBmwjK3NqKP0ew", "https://chocobox-73f90-default-rtdb.firebaseio.com", "juanse8425@gmail.com", "chocoBox"); // Conexión a la base de datos de Firebase
-  
-  
-    // Se agregan los sensores a Firesense
-    connecT.addSensor(&humidity_01);
-    connecT.addSensor(&temperature_01);
-    connecT.addSensor(&humidity_02);
-    connecT.addSensor(&temperature_02);
-    connecT.addSensor(&ferm_time_hr);
-    connecT.addSensor(&desiredHumidity);
-    connecT.addSensor(&desiredTemperature);
-
-    // Conexión a Firesense - Último que debe hacerse
-    connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
-
-    //Se obtiene el JSON con el ambiente a recrear y se interpola inicialmente
-    if (WiFi.status() == WL_CONNECTED) {
-        updateEnvironment();
-    }
-    else{
-        wifiAtSetup = false;
-        timer_start = millis();
-    }
-  }
+  /*TO-DO ACTUALIZAR SPLINE*/
+  updateEnvironment();
 
 
-
-
-  /* Se obtiene la información almacenada en memoria flash - Curvas a replicar */
-  preferences.getBytes("vq_temp", vq_tempBuffer, preferences.getBytesLength("vq_temp"));
-  preferences.getBytes("vq_humidity", vq_humidityBuffer, preferences.getBytesLength("vq_humidity"));
-
-  /* Se instancian los arreglos en memoria flash que almacenaran los datos de humedad y temperatura reales */
-  if(!preferences.isKey("data_tem") && !preferences.isKey("data_hum")){
-    preferences.putBytes("data_tem", temperature_buffer, sizeof(temperature_buffer));
-    preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
-  }
+  /*TO-DO Se obtiene la información almacenada en memoria flash - Curvas a replicar */
 
   /* Se vinculan los apuntadores de los arrays de medición al protocolo REST */
   ChocoBoxREST::linkServer(connecT.getServerPointer());
-  ChocoBoxREST::linkHumidity(humidity_buffer);
-  ChocoBoxREST::linkTemperature(temperature_buffer);
   ChocoBoxREST::linkReset(resetPointer);
 
   //Vincular el API REST con el servidor WiFi
@@ -293,24 +294,35 @@ void loop() {
     ferm_time = 0;
     ferm_time_hr = 0;
 
-    //Se reinician los arreglos de datos almacenados
-    memset(temperature_buffer, 0, sizeof(temperature_buffer));
-    memset(humidity_buffer, 0, sizeof(humidity_buffer));
-
-    preferences.putBytes("data_tem", temperature_buffer, sizeof(temperature_buffer));
-    preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
-
     //Se reinicia el índice previo
     prev_index = -1;
     prev_ferm_time = 0;
+
+    //Se resetean los datos de la SD
+    dataFile = SD.open("/datalog.txt", FILE_WRITE);
+    dataFile = SD.open("/datalog.txt", FILE_APPEND);
+    dataFile.print("time,temperature,humidity\n");
+    dataFile.flush();
+
+    //Se reinicia el display
+    lcd.clear();
+    lcd.backlight();
+    lcd.setCursor(0, 0);
+    lcd.print("Humidity: ");
+    lcd.setCursor(0, 1);
+    lcd.print("Temperature: ");
+    lcd.setCursor(0, 3);
+    lcd.print("Time: ");
 
   }
 
 
   /* Se establece el valor deseado de temperatura y humedad según la gráfica */
   int index = (int) (ferm_time/(paso*3600));
-  desiredTemperature = vq_tempBuffer[index];
-  desiredHumidity = vq_humidityBuffer[index];
+
+  //TO-DO: Obtener el valor deseado de la SD
+  //desiredTemperature = vq_tempBuffer[index];
+  //desiredHumidity = vq_humidityBuffer[index];
 
   /* Lectura de los sensores */
   humidity_01 = desiredHumidity;//dht_01.readHumidity(); // Lectura de la humedad
@@ -357,41 +369,18 @@ void loop() {
 
       prev_index = index;
 
-      preferences.getBytes("data_tem", temperature_buffer, preferences.getBytesLength("data_tem"));
-      preferences.getBytes("data_hum", humidity_buffer, preferences.getBytesLength("data_hum"));
-
-      temperature_buffer[index] = (temperature_01+temperature_02)/2;
-      humidity_buffer[index] = (humidity_01+humidity_02)/2;
-
-      preferences.putBytes("data_tem", temperature_buffer, sizeof(temperature_buffer));
-      preferences.putBytes("data_hum", humidity_buffer, sizeof(humidity_buffer));
+      /*Se suben los datos a la SD*/
+      dataFile.print(ferm_time);
+      dataFile.print(",");
+      dataFile.print((temperature_01+temperature_02)/2);
+      dataFile.print(",");
+      dataFile.print((humidity_01+humidity_02)/2);
+      dataFile.print("\n");
+      dataFile.flush();
 
       Serial.println("Datos almacenados.");
    }
 
   //Se revisan las posibles peticiones REST del cliente
   (connecT.getServerPointer())->handleClient(); 
-
-
-  /* Corre FireSense (último en el loop)*/
-   connecT.FS_run();  
-
-
-   /* En dado caso de no haberse conectado nunca a WiFi, lo intenta cada 15 minutos */
-   if(!wifiAtSetup && millis() - timer_start > (1000 * 60) * 15){
-      Serial.println("Intentando reconectar a internet...");  
-      connecT.setWiFi_STA("HOTELLASFLORES", "HOSPEDERIA"); // Conexión a la red WiFi
-      connecT.setFirebase("AIzaSyD2ldqxOE9shGk3XsHtYvBmwjK3NqKP0ew", "https://chocobox-73f90-default-rtdb.firebaseio.com", "juanse8425@gmail.com", "chocoBox"); // Conexión a la base de datos de Firebase
-      connecT.setFiresense("/Sensors", "Node1", 3, log_interval, log_interval, log_persistence); 
-      
-      if(WiFi.status() == WL_CONNECTED){
-          wifiAtSetup = true;
-      }
-   }
-   if (millis() - timer_start > (1000 * 60) * 15){
-      timer_start = millis();
-   }
-
-   delay(100);
-
 }

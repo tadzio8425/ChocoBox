@@ -1,27 +1,10 @@
 #include "Arduino.h"
 #include "ConnecT.h"
-#include <Firebase_ESP_Client.h>
 
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
 
-//Provide the token generation process info.
-#include "addons/TokenHelper.h"
-//Provide the RTDB payload printing info and other helper functions.
-#include "addons/RTDBHelper.h"
-// The FireSense class
-#include <addons/FireSense/FireSense.h>
-
-// The config data for FireSense class
-Firesense_Config fsConfig;
-
-// Define Firebase Data object
-FirebaseData fbdo1;
-FirebaseData fbdo2;
-
-FirebaseAuth auth;
-FirebaseConfig config;
 
 void ConnecT::setDualMode(){
   WiFi.mode(WIFI_AP_STA);
@@ -74,92 +57,10 @@ void ConnecT::setWiFi_wokwi()
 
 
 
-
-void ConnecT::setFirebase(char* api_key, char* database_url, char* user_email, char* user_password){
-
-  // Check if Wi-Fi is connected
-  if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("No Wi-Fi connection. FireBase initialization skipped.");
-      return;
-  }
-
-  unsigned long sendDataPrevMillis = 0;
-  int count = 0;
-
-  config.api_key = api_key;
-  config.database_url = database_url;
-
-  auth.user.email = user_email;
-  auth.user.password = user_password;
-  
-  Firebase.reconnectWiFi(true);
-  fbdo1.setResponseSize(4096);
-
-  config.token_status_callback = tokenStatusCallback;
-
-  Firebase.begin(&config, &auth);
-
-}
-
-void ConnecT::sendFloat(String path, float data){
-  if(Firebase.ready()){
-    Firebase.RTDB.setFloat(&fbdo1, path, data);
-  }
-
-}
-
-void ConnecT::setFiresense(char* basePath, char* deviceID, int timeZone, int lastSeenInterval,
- int logInterval, long dataRetainingPeriod){
-
-    Serial.println("Espere a que FireSense configure sus sensores...");
-
-    // Check if Wi-Fi is connected
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("No Wi-Fi connection. FireSense initialization skipped.");
-        return;
-    }
-
-    // Set up the config
-    fsConfig.basePath = basePath;
-    fsConfig.deviceId = "Node1";
-    fsConfig.time_zone = timeZone; // change for your local time zone
-    fsConfig.daylight_offset_in_sec = 0;
-    fsConfig.last_seen_interval = lastSeenInterval;     // store timestamp
-    fsConfig.log_interval =logInterval;           // store log data every 60 seconds
-    fsConfig.condition_process_interval = 20;    // check conditions every 20 mSec
-    fsConfig.dataRetainingPeriod = dataRetainingPeriod; // keep the log data for 1 day
-    fsConfig.shared_fbdo = &fbdo1;               // for store/restore the data
-    fsConfig.stream_fbdo = &fbdo2;               // for stream, if set this stream_fbdo to nullptr, the stream will connected through shared FirebaseData object.
-    fsConfig.debug = false;
-
-    FireSense.begin(&fsConfig, "");
-
-    load_FsConfig();
-    FireSense.loadConfig();
-    FireSense.updateConfig();
-
-    Serial.println("Sensores listos!");
-}
-
-void ConnecT::addSensor(float* sensor_value){
-    FireSense.addUserValue(sensor_value);
-}
-
-
-FirebaseJson* ConnecT::getJSON(String path){
-  Firebase.RTDB.getJSON(&fbdo1, path);
-  FirebaseJson* json = fbdo1.jsonObjectPtr();
-  return json;
-}
-
 void ConnecT::setWebServer(int port)
 {
   _serverPointer = new WebServer(port);
   _serverPointer->enableCORS();
-}
-
-void ConnecT::FS_run(){
-  FireSense.run();
 }
 
 
@@ -179,77 +80,3 @@ WebServer* ConnecT::getServerPointer(){
   return _serverPointer;
 }
 
-
-void ConnecT::load_FsConfig(){
-  FireSense_Channel channel[7];
-
-  channel[0].id = "HUMID1";
-  channel[0].name = "Humidity sensor data";
-  channel[0].location = "Room1 1";
-  channel[0].type = Firesense_Channel_Type::Value;
-  channel[0].status = true;   // to store value to the database status
-  channel[0].log = true;      // to store value to the database log
-  channel[0].value_index = 0; // this the index of bound user variable which added with FireSense.addUserValue
-  FireSense.addChannel(channel[0]);
-
-  channel[1].id = "TEMP1";
-  channel[1].name = "Temperature sensor data";
-  channel[1].location = "Room1 1";
-  channel[1].type = Firesense_Channel_Type::Value;
-  channel[1].status = true;   // to store value to the database status
-  channel[1].log = true;      // to store value to the database log
-  channel[1].value_index = 1; // this the index of bound user variable which added with FireSense.addUserValue
-  FireSense.addChannel(channel[1]);
-
-
-  channel[2].id = "HUMID2";
-  channel[2].name = "Humidity sensor data";
-  channel[2].location = "Room1 2";
-  channel[2].type = Firesense_Channel_Type::Value;
-  channel[2].status = true;   // to store value to the database status
-  channel[2].log = true;      // to store value to the database log
-  channel[2].value_index = 2; // this the index of bound user variable which added with FireSense.addUserValue
-  FireSense.addChannel(channel[2]);
-
-
-  channel[3].id = "TEMP2";
-  channel[3].name = "Temperature sensor data";
-  channel[3].location = "Room1 2";
-  channel[3].type = Firesense_Channel_Type::Value;
-  channel[3].status = true;   // to store value to the database status
-  channel[3].log = true;      // to store value to the database log
-  channel[3].value_index = 3; // this the index of bound user variable which added with FireSense.addUserValue
-  FireSense.addChannel(channel[3]);
-
-
-  channel[4].id = "ferm_time";
-  channel[4].name = "Fermentation Time";
-  channel[4].location = "Room1";
-  channel[4].type = Firesense_Channel_Type::Value;
-  channel[4].status = true;   // to store value to the database status
-  channel[4].log = true;      // to store value to the database log
-  channel[4].value_index = 4; // this the index of bound user variable which added with FireSense.addUserValue
-  FireSense.addChannel(channel[4]);
-
-
-  channel[5].id = "desired_humidity";
-  channel[5].name = "Humedad Deseada";
-  channel[5].location = "Room1";
-  channel[5].type = Firesense_Channel_Type::Value;
-  channel[5].status = true;   // to store value to the database status
-  channel[5].log = true;      // to store value to the database log
-  channel[5].value_index = 5; // this the index of bound user variable which added with FireSense.addUserValue
-  FireSense.addChannel(channel[5]);
-
-
-  channel[6].id = "desired_temp";
-  channel[6].name = "Temperatura Deseada";
-  channel[6].location = "Room1";
-  channel[6].type = Firesense_Channel_Type::Value;
-  channel[6].status = true;   // to store value to the database status
-  channel[6].log = true;      // to store value to the database log
-  channel[6].value_index = 6; // this the index of bound user variable which added with FireSense.addUserValue
-  FireSense.addChannel(channel[6]);
-
-
-}

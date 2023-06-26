@@ -330,6 +330,10 @@ void loop() {
   temperatureController.update();
 
   /* Actualización de la pantalla LCD */
+  uint8_t hours = ferm_time/3600;
+  uint8_t minutes = (ferm_time - (hours * 3600))/60;
+  uint8_t seconds = (ferm_time - (hours*3600) - (minutes*60));
+
   lcd.setCursor(10, 0);
   lcd.print((humidity_01+humidity_02)/2);
   lcd.print("%");
@@ -339,7 +343,23 @@ void loop() {
   lcd.print(" C");
 
   lcd.setCursor(6, 3);
-  lcd.print(ferm_time);
+  if(hours < 10){
+    lcd.print(0);
+  }
+  lcd.print(hours);
+  lcd.print(":");
+  if(minutes < 10){
+    lcd.print(0);
+  }
+  lcd.print(minutes);
+  lcd.print(":");
+  if(seconds < 10){
+    lcd.print(0);
+  }
+  lcd.print(seconds);
+
+
+
 
 
   /* Se almacena el instante actual de funcionamiento de la fermentación */

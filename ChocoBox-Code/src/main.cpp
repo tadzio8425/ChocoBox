@@ -29,7 +29,7 @@ std::vector<float> vq_temp;
 std::vector<float> vq_humidity;
 
 const int numOfHours = 336; // Número de horas que dura la fermentación
-const float paso = 0.1; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+const float paso = 0.05; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
 const int buffer_size = numOfHours/paso;
 
 //Archivos tarjeta SD
@@ -81,14 +81,13 @@ void sendSplineSD(const std::vector<float>& hourVec,
                           const std::vector<float>& humidityVec) {
     String dataString;
     for (size_t i = 0; i < hourVec.size(); ++i) {
-        dataString += String(hourVec[i]) + "," + String(temperatureVec[i]) + "," +
-                      String(humidityVec[i]) + "\n";
+        dataString += String(hourVec[i], 3) + "," + String(temperatureVec[i], 3) + "," +
+                      String(humidityVec[i], 3) + "\n";
     }
 
     splineFile = SD.open("/spline.txt", FILE_WRITE);
     splineFile.print(dataString);
     splineFile.flush();
-    delay(100);
     splineFile.close();
 }
 
@@ -167,13 +166,12 @@ void updateEnvironment(){
   //Se actualizan los vectores de la interpolación
   extractEnvironmentData(environment_str, x, v_temp, v_humidity);
 
-  //TODO- OBTENER X, V_TEMP Y V_HUMID
   xq = interpol.generateXq(x[0], x[x.size()-1], paso);
 
   vq_temp = interpol.cubicSpline(x, v_temp, xq);
   vq_humidity = interpol.cubicSpline(x, v_humidity, xq);
 
-  /*TO-DO: Subir a la tarjeta SD el resultado (vq_temp y vq_humidity)*/
+  /*Subir a la tarjeta SD el resultado (vq_temp y vq_humidity)*/
   sendSplineSD(xq, vq_temp, vq_humidity);
 
   x.clear();
@@ -257,11 +255,9 @@ void setup() {
   connecT.setWiFi_AP("ChocoBox", "chocoBox");
   connecT.setWebServer(80); // Creación del servidor web en el puerto 80
 
-  /*TO-DO ACTUALIZAR SPLINE*/
+  /*ACTUALIZAR SPLINE*/
   updateEnvironment();
 
-
-  /*TO-DO Se obtiene la información almacenada en memoria flash - Curvas a replicar */
 
   /* Se vinculan los apuntadores de los arrays de medición al protocolo REST */
   ChocoBoxREST::linkServer(connecT.getServerPointer());
@@ -320,11 +316,7 @@ void loop() {
   /* Se establece el valor deseado de temperatura y humedad según la gráfica */
   int index = (int) (ferm_time/(paso*3600));
 
-  //TO-DO: Obtener el valor deseado de la SD
-  //desiredTemperature = vq_tempBuffer[index];
-  //desiredHumidity = vq_humidityBuffer[index];
-
-  /* Lectura de los sensores */
+  /*TO-DO Lectura de los sensores */
   humidity_01 = desiredHumidity;//dht_01.readHumidity(); // Lectura de la humedad
   humidity_02 = desiredHumidity;//dht_02.readHumidity(); // Lectura de la humedad
 
@@ -364,17 +356,35 @@ void loop() {
 
 
   /* Se escribe el archivo con la data recolectada - Únicament con el cambio de índice */
-   if(prev_index != index){
+  if(prev_index != index){
       Serial.println("Almacenando datos...");
+
+      //TO-DO: Obtener el valor deseado de la SD
+      splineFile = SD.open("/spline.txt");
+      
+      //Se recorren las líneas hasta llegar a la deseada...
+      int lineCount = 0;
+      while(lineCount < index){
+        splineFile.find('\n');
+        lineCount++;
+      }
+      String desiredLine = splineFile.readStringUntil('\n');
+
+      int first_comma = desiredLine.indexOf(",");
+      int last_comma = desiredLine.lastIndexOf(",");
+
+      //Se actualiza el valor deseado
+      desiredTemperature =  (desiredLine.substring(first_comma+1, last_comma)).toFloat();
+      desiredHumidity = (desiredLine.substring(last_comma+1, desiredLine.length())).toFloat();
 
       prev_index = index;
 
       /*Se suben los datos a la SD*/
       dataFile.print(ferm_time);
       dataFile.print(",");
-      dataFile.print((temperature_01+temperature_02)/2);
+      dataFile.print((temperature_01+temperature_02)/2, 3);
       dataFile.print(",");
-      dataFile.print((humidity_01+humidity_02)/2);
+      dataFile.print((humidity_01+humidity_02)/2, 3);
       dataFile.print("\n");
       dataFile.flush();
 

@@ -23,10 +23,6 @@ void Humidifier::turnON()
         digitalWrite(_humidifier_pin, HIGH);
         delay(_pressDelay);
         digitalWrite(_humidifier_pin, LOW);
-        delay(_pressDelay);
-        digitalWrite(_humidifier_pin, HIGH);
-        delay(_pressDelay);
-        digitalWrite(_humidifier_pin, LOW);
     }
     isOn = true;
 }
@@ -34,6 +30,10 @@ void Humidifier::turnON()
 void Humidifier::turnOFF()
 {
     if(isOn){
+        digitalWrite(_humidifier_pin, HIGH);
+        delay(_pressDelay);
+        digitalWrite(_humidifier_pin, LOW);
+        delay(_pressDelay);
         digitalWrite(_humidifier_pin, HIGH);
         delay(_pressDelay);
         digitalWrite(_humidifier_pin, LOW);

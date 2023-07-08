@@ -26,7 +26,6 @@ void TemperatureController::update()
     if(temperature_mean < *_desiredTemperature)
     {
         _heater->turnON();
-        Serial.println("xdxd");
     }
     else
     {

@@ -5,6 +5,11 @@ void Humidifier::setUp(int humidifier_pin)
 {
     _humidifier_pin = humidifier_pin;
     pinMode(_humidifier_pin, OUTPUT);
+    digitalWrite(_humidifier_pin, LOW);
+
+    turnON();
+    turnOFF();
+
 }
 
 void Humidifier::setPressDelay(int pressDelay)
@@ -14,18 +19,24 @@ void Humidifier::setPressDelay(int pressDelay)
 
 void Humidifier::turnON()
 {
-    digitalWrite(_humidifier_pin, HIGH);
-    delay(_pressDelay);
-    digitalWrite(_humidifier_pin, LOW);
+    if(!isOn){
+        digitalWrite(_humidifier_pin, HIGH);
+        delay(_pressDelay);
+        digitalWrite(_humidifier_pin, LOW);
+        delay(_pressDelay);
+        digitalWrite(_humidifier_pin, HIGH);
+        delay(_pressDelay);
+        digitalWrite(_humidifier_pin, LOW);
+    }
+    isOn = true;
 }
 
 void Humidifier::turnOFF()
 {
-    digitalWrite(_humidifier_pin, HIGH);
-    delay(_pressDelay);
-    digitalWrite(_humidifier_pin, LOW);
-    delay(_pressDelay);
-    digitalWrite(_humidifier_pin, HIGH);
-    delay(_pressDelay);
-    digitalWrite(_humidifier_pin, LOW);
+    if(isOn){
+        digitalWrite(_humidifier_pin, HIGH);
+        delay(_pressDelay);
+        digitalWrite(_humidifier_pin, LOW);
+    }
+    isOn = false;
 }

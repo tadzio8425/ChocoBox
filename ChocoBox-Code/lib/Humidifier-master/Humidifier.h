@@ -12,6 +12,7 @@ class Humidifier
         private:
             int _humidifier_pin;
             int _pressDelay = 400;
+            bool isOn = false;  
     };
 
 #endif

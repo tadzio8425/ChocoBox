@@ -5,7 +5,7 @@
       "Application": "Pcbnew",
       "Version": "7.0.1"
     },
-    "CreationDate": "2023-06-27T15:59:23-05:00"
+    "CreationDate": "2023-06-29T12:07:24-05:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
@@ -34,13 +34,13 @@
   ],
   "FilesAttributes": [
     {
-      "Path": "ChocoBox-F_Cu.gbr",
-      "FileFunction": "Copper,L1,Top",
+      "Path": "ChocoBox-B_Cu.gbr",
+      "FileFunction": "Copper,L2,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "ChocoBox-F_Paste.gbr",
-      "FileFunction": "SolderPaste,Top",
+      "Path": "ChocoBox-B_Paste.gbr",
+      "FileFunction": "SolderPaste,Bot",
       "FilePolarity": "Positive"
     },
     {
@@ -49,8 +49,8 @@
       "FilePolarity": "Positive"
     },
     {
-      "Path": "ChocoBox-F_Mask.gbr",
-      "FileFunction": "SolderMask,Top",
+      "Path": "ChocoBox-B_Mask.gbr",
+      "FileFunction": "SolderMask,Bot",
       "FilePolarity": "Negative"
     },
     {

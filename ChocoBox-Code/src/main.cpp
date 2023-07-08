@@ -95,7 +95,7 @@ void sendSplineSD(const std::vector<float>& hourVec,
 
 /* Pines */
 #define PIN_HUM 27 // Pin del Humidificador
-#define PIN_HEAT 24 // Pin del Calentador
+#define PIN_HEAT 14 // Pin del Calentador
 
 #define DHTTYPE DHT22  // DHT 22  (AM2302), AM2321 - SDA: 21, SCL: 22
 #define DHTPIN_01 4 // Pin del sensor DHT 01
@@ -233,6 +233,7 @@ void setup() {
 
   /* Configuración de los módulos */
   humidifier.setUp(PIN_HUM); // Configuración del humidificador
+  heater.setUp(PIN_HEAT); //Configuración del calentador
   dht_01.begin(); // Configuración del sensor DHT
   dht_02.begin(); // Configuración del sensor DHT
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
@@ -243,10 +244,16 @@ void setup() {
   lcd.init();
   lcd.clear();
   lcd.backlight();
+
   lcd.setCursor(0, 0);
   lcd.print("Humidity: ");
+
   lcd.setCursor(0, 1);
   lcd.print("Temperature: ");
+
+  lcd.setCursor(0, 2);
+  lcd.print("Ref: ");
+
   lcd.setCursor(0, 3);
   lcd.print("Time: ");
 
@@ -303,10 +310,16 @@ void loop() {
     //Se reinicia el display
     lcd.clear();
     lcd.backlight();
+
     lcd.setCursor(0, 0);
     lcd.print("Humidity: ");
+
     lcd.setCursor(0, 1);
     lcd.print("Temperature: ");
+
+    lcd.setCursor(0, 2);
+    lcd.print("Ref: ");
+
     lcd.setCursor(0, 3);
     lcd.print("Time: ");
 
@@ -317,11 +330,11 @@ void loop() {
   int index = (int) (ferm_time/(paso*3600));
 
   /*TO-DO Lectura de los sensores */
-  humidity_01 = desiredHumidity;//dht_01.readHumidity(); // Lectura de la humedad
-  humidity_02 = desiredHumidity;//dht_02.readHumidity(); // Lectura de la humedad
+  humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
+  humidity_02 = dht_02.readHumidity(); // Lectura de la humedad
 
-  temperature_01 = desiredTemperature;//dht_01.readTemperature(); // Lectura de la temperatura
-  temperature_02 = desiredTemperature;//dht_02.readTemperature(); // Lectura de la temperatura
+  temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura
+  temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura
 
   /* Control de la humedad */
   humidityController.update();
@@ -340,7 +353,13 @@ void loop() {
 
   lcd.setCursor(13, 1);
   lcd.print((temperature_01+temperature_02)/2);
-  lcd.print(" C");
+  lcd.print("C");
+
+  lcd.setCursor(5, 2);
+  lcd.print(desiredHumidity);
+  lcd.print("% / ");
+  lcd.print(desiredTemperature);
+  lcd.print("C");
 
   lcd.setCursor(6, 3);
   if(hours < 10){

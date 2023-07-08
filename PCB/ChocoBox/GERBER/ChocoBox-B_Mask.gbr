@@ -1,12 +1,12 @@
 %TF.GenerationSoftware,KiCad,Pcbnew,7.0.1*%
-%TF.CreationDate,2023-06-27T15:59:23-05:00*%
+%TF.CreationDate,2023-06-29T12:07:24-05:00*%
 %TF.ProjectId,ChocoBox,43686f63-6f42-46f7-982e-6b696361645f,rev?*%
 %TF.SameCoordinates,Original*%
-%TF.FileFunction,Soldermask,Top*%
+%TF.FileFunction,Soldermask,Bot*%
 %TF.FilePolarity,Negative*%
 %FSLAX46Y46*%
 G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
-G04 Created by KiCad (PCBNEW 7.0.1) date 2023-06-27 15:59:23*
+G04 Created by KiCad (PCBNEW 7.0.1) date 2023-06-29 12:07:24*
 %MOMM*%
 %LPD*%
 G01*
@@ -22,6 +22,9 @@ G04 APERTURE LIST*
 %ADD18C,2.600000*%
 %ADD19R,2.540000X2.540000*%
 %ADD20C,2.540000*%
+%TA.AperFunction,Profile*%
+%ADD21C,0.500000*%
+%TD*%
 G04 APERTURE END LIST*
 D10*
 %TO.C,J16*%
@@ -224,4 +227,10 @@ D14*
 X78217000Y-46761000D03*
 X75677000Y-46761000D03*
 %TD*%
+D21*
+X61468000Y-37084000D02*
+X163068000Y-37084000D01*
+X163068000Y-98552000D01*
+X61468000Y-98552000D01*
+X61468000Y-37084000D01*
 M02*

@@ -355,9 +355,6 @@ void loop() {
   ds18b20_D = tempSensors.getTempCByIndex(3);
   //TO-DO: Cambiar el index por la dirección
   
-  
-  Serial.println(tempSensors.getTempCByIndex(0));
-
   /* Control de la humedad */
   humidityController.update();
 

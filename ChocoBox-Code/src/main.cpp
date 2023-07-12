@@ -16,7 +16,8 @@
 #include <SD.h>
 #include <Adafruit_GFX.h>
 #include <SPI.h>
-
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 using namespace ChocoBoxREST;
 
@@ -101,6 +102,8 @@ void sendSplineSD(const std::vector<float>& hourVec,
 #define DHTPIN_01 4 // Pin del sensor DHT 01
 #define DHTPIN_02 2 // Pin del sensor DHT 02
 
+#define ONE_WIRE_BUS 25
+
 #define chipSelect 5
 
 
@@ -116,6 +119,11 @@ uint32_t ferm_time = 0; // Variable que almacena el tiempo de fermentación
 float ferm_time_hr = 0; // Variable que almacena el tiempo de fermentación en horas
 uint32_t prev_ferm_time = 0; // Variable que almacena el tiempo de fermentación previo
 int prev_index = -1; // Variable que almacena el índice previo de la interpolación
+
+float ds18b20_A = 0;
+float ds18b20_B = 0;
+float ds18b20_C = 0;
+float ds18b20_D = 0;
 
 /* Variables de control */
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
@@ -143,6 +151,9 @@ RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
 Interpol interpol; // Instancia de la clase Interpol: Permite la interpolación de los datos
 Preferences preferences; // Instancia de la clase Preferences: Permite el almacenamiento de datos en la memoria flash
+OneWire oneWire(ONE_WIRE_BUS); //Instancia de la clase OneWire, permite conectarse a los dispositivos que usen este protocolo
+DallasTemperature tempSensors(&oneWire); //Instancia de DallasTemperature para los DS18B20
+
 
 char dateBuff[20];
 
@@ -236,6 +247,7 @@ void setup() {
   heater.setUp(PIN_HEAT); //Configuración del calentador
   dht_01.begin(); // Configuración del sensor DHT
   dht_02.begin(); // Configuración del sensor DHT
+  tempSensors.begin(); //Inicio DS18B20
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
   temperatureController.setDesiredTemperature(&desiredTemperature); // Configuración de la temperatura deseada
   ChocoBoxREST::_bufferSize = buffer_size; // Configuración del tamaño del buffer de datos
@@ -329,12 +341,22 @@ void loop() {
   /* Se establece el valor deseado de temperatura y humedad según la gráfica */
   int index = (int) (ferm_time/(paso*3600));
 
-  /*TO-DO Lectura de los sensores */
-  humidity_01 = dht_01.readHumidity(); // Lectura de la humedad
-  humidity_02 = dht_02.readHumidity(); // Lectura de la humedad
+  /* Lectura de los sensores */
+  humidity_01 = dht_01.readHumidity(); // Lectura de la humedad con DHT
+  humidity_02 = dht_02.readHumidity(); // Lectura de la humedad con DHT
 
-  temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura
-  temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura
+  temperature_01 = dht_01.readTemperature(); // Lectura de la temperatura con DHT
+  temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura con DHT
+
+  tempSensors.requestTemperatures(); //Se solicitan las temperaturas a todos los sensores DS18B20 del bus 
+  ds18b20_A = tempSensors.getTempCByIndex(0);
+  ds18b20_B = tempSensors.getTempCByIndex(1);
+  ds18b20_C = tempSensors.getTempCByIndex(2);
+  ds18b20_D = tempSensors.getTempCByIndex(3);
+  //TO-DO: Cambiar el index por la dirección
+  
+  
+  Serial.println(tempSensors.getTempCByIndex(0));
 
   /* Control de la humedad */
   humidityController.update();

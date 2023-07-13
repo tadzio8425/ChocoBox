@@ -463,7 +463,7 @@ void loop() {
   //Se revisan las posibles peticiones REST del cliente
   (connecT.getServerPointer())->handleClient(); 
 
-  Serial.println(now);
+  Serial.print(ferm_time);
   Serial.print(",");
-  Serial.print(global_temp);
+  Serial.println(global_temp);
 }

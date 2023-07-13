@@ -6,14 +6,13 @@
 
 class TemperatureController{
     public:
-        TemperatureController(float* temperature_01, float* temperature_02, Heater* heater);
+        TemperatureController(float* temperature, Heater* heater);
         void setDesiredTemperature(float* desiredTemperature);
         void setOffSetTemperature(float* offSetTemperature);
         void update();
 
     private:
-        float* _temperature_01;
-        float* _temperature_02;
+        float* _temperature;
         float* _desiredTemperature;
         float* _offSetTemperature;
         Heater* _heater;

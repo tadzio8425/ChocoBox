@@ -8,8 +8,6 @@ void Humidifier::setUp(int humidifier_pin)
     digitalWrite(_humidifier_pin, LOW);
 
     turnON();
-    turnOFF();
-
 }
 
 void Humidifier::setPressDelay(int pressDelay)

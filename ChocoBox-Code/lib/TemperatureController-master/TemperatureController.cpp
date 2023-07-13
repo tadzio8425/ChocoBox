@@ -2,10 +2,9 @@
 #include <Heater.h>	
 #include <TemperatureController.h>
 
-TemperatureController::TemperatureController(float* temperature_01, float* temperature_02, Heater* heater)
+TemperatureController::TemperatureController(float* temperature, Heater* heater)
 {
-    _temperature_01 = temperature_01;
-    _temperature_02 = temperature_02;
+    _temperature = temperature;
     _heater = heater;
 }
 
@@ -21,9 +20,8 @@ void TemperatureController::setOffSetTemperature(float* offSetTemperature)
 
 void TemperatureController::update()
 {
-    float temperature_mean = (*_temperature_01 + *_temperature_02)/2;
 
-    if(temperature_mean < *_desiredTemperature)
+    if(*_temperature < *_desiredTemperature)
     {
         _heater->turnON();
     }

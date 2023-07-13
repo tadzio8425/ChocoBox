@@ -18,6 +18,7 @@
 #include <SPI.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <MovingAverage.h>
 
 using namespace ChocoBoxREST;
 
@@ -125,6 +126,8 @@ float ds18b20_B = 0;
 float ds18b20_C = 0;
 float ds18b20_D = 0;
 
+float global_temp = 0;
+
 /* Variables de control */
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
 float desiredTemperature = 0; // Variable que almacena la temperatura deseada
@@ -146,14 +149,14 @@ Heater heater; // Instancia de la clase Heater: Permite el control del calentado
 DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
-TemperatureController temperatureController(&temperature_01, &temperature_02, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
+TemperatureController temperatureController(&global_temp, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
 RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
 Interpol interpol; // Instancia de la clase Interpol: Permite la interpolación de los datos
 Preferences preferences; // Instancia de la clase Preferences: Permite el almacenamiento de datos en la memoria flash
 OneWire oneWire(ONE_WIRE_BUS); //Instancia de la clase OneWire, permite conectarse a los dispositivos que usen este protocolo
 DallasTemperature tempSensors(&oneWire); //Instancia de DallasTemperature para los DS18B20
-
+MovingAverage* tempAverage = new MovingAverage(); //Objeto que almacenará el promedio de las temperaturas
 
 char dateBuff[20];
 
@@ -251,6 +254,12 @@ void setup() {
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
   temperatureController.setDesiredTemperature(&desiredTemperature); // Configuración de la temperatura deseada
   ChocoBoxREST::_bufferSize = buffer_size; // Configuración del tamaño del buffer de datos
+
+  //Se asocian las variables de temperatura con su promedio
+  //tempAverage -> append(&temperature_01);
+  //tempAverage -> append(&temperature_02);
+  tempAverage -> append(&ds18b20_A);
+
 
   /* Configuración de la pantalla LCD */
   lcd.init();
@@ -353,7 +362,9 @@ void loop() {
   ds18b20_B = tempSensors.getTempCByIndex(1);
   ds18b20_C = tempSensors.getTempCByIndex(2);
   ds18b20_D = tempSensors.getTempCByIndex(3);
-  //TO-DO: Cambiar el index por la dirección
+
+  /* Una vez leídos los sensores, se obtiene el promedio las temperaturas*/
+  global_temp = tempAverage->getAverage();
   
   /* Control de la humedad */
   humidityController.update();
@@ -371,7 +382,7 @@ void loop() {
   lcd.print("%");
 
   lcd.setCursor(13, 1);
-  lcd.print((temperature_01+temperature_02)/2);
+  lcd.print(global_temp);
   lcd.print("C");
 
   lcd.setCursor(5, 2);
@@ -440,7 +451,7 @@ void loop() {
       /*Se suben los datos a la SD*/
       dataFile.print(ferm_time);
       dataFile.print(",");
-      dataFile.print((temperature_01+temperature_02)/2, 3);
+      dataFile.print(global_temp, 3);
       dataFile.print(",");
       dataFile.print((humidity_01+humidity_02)/2, 3);
       dataFile.print("\n");
@@ -451,4 +462,8 @@ void loop() {
 
   //Se revisan las posibles peticiones REST del cliente
   (connecT.getServerPointer())->handleClient(); 
+
+  Serial.println(now);
+  Serial.print(",");
+  Serial.print(global_temp);
 }

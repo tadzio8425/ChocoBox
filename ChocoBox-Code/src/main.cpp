@@ -256,9 +256,10 @@ void setup() {
   ChocoBoxREST::_bufferSize = buffer_size; // Configuración del tamaño del buffer de datos
 
   //Se asocian las variables de temperatura con su promedio
-  //tempAverage -> append(&temperature_01);
-  //tempAverage -> append(&temperature_02);
   tempAverage -> append(&ds18b20_A);
+  tempAverage -> append(&ds18b20_B);
+  tempAverage -> append(&ds18b20_C);
+  tempAverage -> append(&ds18b20_D);
 
 
   /* Configuración de la pantalla LCD */

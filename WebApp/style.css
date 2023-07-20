@@ -1,0 +1,84 @@
+@font-face {
+    font-family: SourceSans;
+    src: url(/WebApp/fonts/SourceSans3-Regular.ttf);
+}
+
+body{
+    font-family: "SourceSans";
+    margin: 0;
+    background-color: rgb(240, 231, 214);
+}
+
+
+header{
+    background-color: rgb(170, 141, 119);
+    display: flex;
+    align-content: flex-start;
+}
+
+.titles{
+    display: flex;
+    margin: 0px 10px;
+    justify-content: space-between;
+}
+
+header.h3{
+   opacity: 0.7;
+}
+
+.superBox{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-content: space-around;
+    justify-content: space-around;
+    min-height: 300px;
+    background-color: whitesmoke;
+    border: 8px solid rgb(196, 196, 196);
+    border-radius: 6px;
+}
+
+.box{
+    display: flex;
+    justify-content: center;
+}
+
+.humBox{
+    display: flex;
+    background-color: rgb(184, 241, 241);
+    width: 60%;
+    border-radius: 60px;
+}
+
+.tempBox{
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+.fermentador{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(221, 177, 147, 0.899);
+    width: 25%;
+    border-radius: 40px;
+    padding: 40px 0px;
+}
+
+.fermentador h2{
+    margin: 0;
+}
+
+.fermentador h3{
+    margin: 0;
+}
+
+.buttonBox{
+    margin-top: 20px;
+}
+
+
+
+
+
+

@@ -107,6 +107,13 @@ void sendSplineSD(const std::vector<float>& hourVec,
 
 #define chipSelect 5
 
+//Direcciones DS18B20
+uint8_t sensA_add[] = {0x28, 0xFF, 0x64, 0x1E, 0XF6, 0x66, 0x6D, 0x5F};
+uint8_t sensB_add[] = {0x28, 0xFF, 0x64, 0x1E, 0xF7, 0x84, 0x80, 0x04};
+uint8_t sensC_add[] = {0x28, 0xFF, 0x64, 0x1E, 0xF7, 0x96, 0x3D, 0xB6};
+uint8_t sensD_add[] = {0x28, 0xFF, 0x64, 0x1E, 0x1F, 0x84, 0x68, 0xCD};
+
+
 
 //IMPORTANTE - VARIABLE QUE HABILITA EL WIFI
 bool useWiFi = false;
@@ -298,7 +305,6 @@ void setup() {
   connecT.addPUTtoWeb("/reset", ChocoBoxREST::putReset);
 
   (connecT.getServerPointer())->begin();
-
 }
 
 void loop() {
@@ -359,10 +365,10 @@ void loop() {
   temperature_02 = dht_02.readTemperature(); // Lectura de la temperatura con DHT
 
   tempSensors.requestTemperatures(); //Se solicitan las temperaturas a todos los sensores DS18B20 del bus 
-  ds18b20_A = tempSensors.getTempCByIndex(0);
-  ds18b20_B = tempSensors.getTempCByIndex(1);
-  ds18b20_C = tempSensors.getTempCByIndex(2);
-  ds18b20_D = tempSensors.getTempCByIndex(3);
+  ds18b20_A = tempSensors.getTempC(sensA_add);
+  ds18b20_B = tempSensors.getTempC(sensB_add);
+  ds18b20_C = tempSensors.getTempC(sensC_add);
+  ds18b20_D = tempSensors.getTempC(sensD_add);
 
   /* Una vez leídos los sensores, se obtiene el promedio las temperaturas*/
   global_temp = tempAverage->getAverage();
@@ -463,8 +469,4 @@ void loop() {
 
   //Se revisan las posibles peticiones REST del cliente
   (connecT.getServerPointer())->handleClient(); 
-
-  Serial.print(ferm_time);
-  Serial.print(",");
-  Serial.println(global_temp);
 }

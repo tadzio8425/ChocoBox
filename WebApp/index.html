@@ -40,9 +40,23 @@
             </div>
         </div>
 
-        <div class="box buttonBox">
-            <button id="resetButton">Reset</button>
-        </div>
+        
+        <input type="button" onclick="reset()" value="Reset"/>
+        <script>
+            function reset(){
+                fetch("http://192.168.1.1/reset", {
+                    method: 'PUT',
+                    headers: {
+                        'Accept': '*/*',
+                        'Content-Type': 'application/json',
+                        
+                    },
+                    body: JSON.stringify({ "reset": true })
+                })
+                .then(response => response.ok)
+                .then(response => console.log(response))
+            }
+        </script>
         
     </body>
 </html>

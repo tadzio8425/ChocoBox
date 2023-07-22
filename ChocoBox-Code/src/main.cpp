@@ -19,6 +19,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <MovingAverage.h>
+#include <SPIFFS.h>
 
 using namespace ChocoBoxREST;
 
@@ -211,6 +212,10 @@ void setup() {
   /* Inicialización apuntadores */
   resetPointer = &defaultReset; 
 
+  //Iniciar SPIFFS
+  if(!SPIFFS.begin(true)){
+    Serial.println("Ocurrió un error al iniciar spiffs!");
+  }
 
   /*Configuración tarjeta SD*/
   Serial.print("Iniciando tajeta SD...");
@@ -266,7 +271,6 @@ void setup() {
   tempAverage -> append(&ds18b20_A);
   tempAverage -> append(&ds18b20_B);
   tempAverage -> append(&ds18b20_C);
-  tempAverage -> append(&ds18b20_D);
 
 
   /* Configuración de la pantalla LCD */
@@ -300,9 +304,8 @@ void setup() {
   ChocoBoxREST::linkReset(resetPointer);
 
   //Vincular el API REST con el servidor WiFi
-  connecT.addGETtoWeb("/temperature", ChocoBoxREST::getTemperature);
-  connecT.addGETtoWeb("/humidity", ChocoBoxREST::getHumidity);
   connecT.addPUTtoWeb("/reset", ChocoBoxREST::putReset);
+  (connecT.getServerPointer()) -> on("/", HTTP_GET, WebServerR)
 
   (connecT.getServerPointer())->begin();
 }
@@ -332,7 +335,7 @@ void loop() {
     //Se resetean los datos de la SD
     dataFile = SD.open("/datalog.txt", FILE_WRITE);
     dataFile = SD.open("/datalog.txt", FILE_APPEND);
-    dataFile.print("time,temperature,humidity\n");
+    dataFile.print("time,temperature,resTemp,humidity\n");
     dataFile.flush();
 
     //Se reinicia el display
@@ -370,7 +373,7 @@ void loop() {
   ds18b20_C = tempSensors.getTempC(sensC_add);
   ds18b20_D = tempSensors.getTempC(sensD_add);
 
-  /* Una vez leídos los sensores, se obtiene el promedio las temperaturas*/
+  /* Una vez leídos los sensores, se obtiene el promedio de las temperaturas*/
   global_temp = tempAverage->getAverage();
   
   /* Control de la humedad */
@@ -459,6 +462,8 @@ void loop() {
       dataFile.print(ferm_time);
       dataFile.print(",");
       dataFile.print(global_temp, 3);
+      dataFile.print(",");
+      dataFile.print(ds18b20_D, 3);
       dataFile.print(",");
       dataFile.print((humidity_01+humidity_02)/2, 3);
       dataFile.print("\n");

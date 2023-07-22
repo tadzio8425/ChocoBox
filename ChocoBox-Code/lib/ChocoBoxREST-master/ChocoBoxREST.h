@@ -3,8 +3,8 @@
 #include <ArduinoJson.h>
 
 // JSON data buffer
-StaticJsonDocument<6000> jsonDocument;
-char buffer[6000];
+StaticJsonDocument<500> jsonDocument;
+char buffer[500];
 
 
 //Funciones de manejo JSON Auxiliares
@@ -40,31 +40,6 @@ namespace ChocoBoxREST{
         _serverPointer = serverPointer;
     }
 
-    // MÉTODOS GET
-    void getTemperature(){
-        jsonDocument.clear(); // Clear the JSON document before populating it
-        JsonArray array = jsonDocument.to<JsonArray>(); // Create a JSON array in the JSON document
-
-        for (int i = 0; i < _bufferSize; i++) {
-            array.add(_temperatureArray[i]);
-        }
-
-        serializeJson(jsonDocument, buffer); // Serialize the JSON document to the buffer
-        _serverPointer->send(200, "application/json", buffer);
-    }
-
-    void getHumidity(){
-        jsonDocument.clear(); // Clear the JSON document before populating it
-        JsonArray array = jsonDocument.to<JsonArray>(); // Create a JSON array in the JSON document
-
-        for (int i = 0; i < _bufferSize; i++) {
-            array.add(_humidityArray[i]);
-        }
-
-        serializeJson(jsonDocument, buffer); // Serialize the JSON document to the buffer
-        _serverPointer->send(200, "application/json", buffer);
-    }
-
 
     //Métodos PUT
     void putReset(){
@@ -80,7 +55,7 @@ namespace ChocoBoxREST{
         (*_resetPointer) = (double) jsonDocument["reset"];
         
         //Se responde con la nueva referencia
-        (*_serverPointer).send(200, "application/json", "Ok");
+        (*_serverPointer).send(200, "application/json", buffer);
     }
 
     void linkTemperature(float temperatureArray[]){

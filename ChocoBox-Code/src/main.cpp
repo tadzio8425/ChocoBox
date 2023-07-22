@@ -19,7 +19,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <MovingAverage.h>
-#include <SPIFFS.h>
 
 using namespace ChocoBoxREST;
 
@@ -212,10 +211,6 @@ void setup() {
   /* Inicialización apuntadores */
   resetPointer = &defaultReset; 
 
-  //Iniciar SPIFFS
-  if(!SPIFFS.begin(true)){
-    Serial.println("Ocurrió un error al iniciar spiffs!");
-  }
 
   /*Configuración tarjeta SD*/
   Serial.print("Iniciando tajeta SD...");
@@ -305,7 +300,6 @@ void setup() {
 
   //Vincular el API REST con el servidor WiFi
   connecT.addPUTtoWeb("/reset", ChocoBoxREST::putReset);
-  (connecT.getServerPointer()) -> on("/", HTTP_GET, WebServerR)
 
   (connecT.getServerPointer())->begin();
 }

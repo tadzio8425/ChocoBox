@@ -23,7 +23,7 @@ namespace ChocoBoxREST{
     bool* _resetPointer;
     int _bufferSize;
 
-    float*  _refTemp;
+    double*  _refTemp;
     float* _refHumid;
 
     float* _tempA;
@@ -73,7 +73,7 @@ namespace ChocoBoxREST{
         add_json_object("reset", 1, "NA");
 
         //Obtener referencia
-        (*_resetPointer) = (double) jsonDocument["reset"];
+        (*_resetPointer) = true;
         
         //Se responde con la nueva referencia
         (*_serverPointer).send(200, "application/json", buffer);
@@ -97,7 +97,7 @@ namespace ChocoBoxREST{
       _humidity = hum;
     }
 
-    void linkRefTemp(float* refT){
+    void linkRefTemp(double* refT){
       _refTemp = refT;
     }
     void linkRefHumid(float* refH){

@@ -20,6 +20,7 @@
 #include <DallasTemperature.h>
 #include <MovingAverage.h>
 
+
 using namespace ChocoBoxREST;
 
 std::vector<float> x;
@@ -107,6 +108,7 @@ void sendSplineSD(const std::vector<float>& hourVec,
 
 #define chipSelect 5
 
+
 //Direcciones DS18B20
 uint8_t sensA_add[] = {0x28, 0xFF, 0x64, 0x1E, 0XF6, 0x66, 0x6D, 0x5F};
 uint8_t sensB_add[] = {0x28, 0xFF, 0x64, 0x1E, 0xF7, 0x84, 0x80, 0x04};
@@ -133,12 +135,12 @@ float ds18b20_B = 0;
 float ds18b20_C = 0;
 float ds18b20_D = 0;
 
-float global_temp = 0;
+double global_temp = 0;
 float global_humidity = 0;
 
 /* Variables de control */
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
-float desiredTemperature = 0; // Variable que almacena la temperatura deseada
+double desiredTemperature = 0; // Variable que almacena la temperatura deseada
 uint32_t now = 0; // Variable que almacena el tiempo actual
 bool* resetPointer;
 bool defaultReset = false; 
@@ -157,7 +159,7 @@ Heater heater; // Instancia de la clase Heater: Permite el control del calentado
 DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 HumidityController humidityController(&global_humidity, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
-TemperatureController temperatureController(&global_temp, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
+TemperatureController temperatureController(&desiredTemperature, &global_temp, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
 RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
 Interpol interpol; // Instancia de la clase Interpol: Permite la interpolación de los datos
@@ -168,6 +170,7 @@ MovingAverage* tempAverage = new MovingAverage(); //Objeto que almacenará el pr
 MovingAverage* humidAverage = new MovingAverage();
 
 char dateBuff[20];
+
 
 /* Funciones */
 
@@ -261,7 +264,6 @@ void setup() {
   dht_02.begin(); // Configuración del sensor DHT
   tempSensors.begin(); //Inicio DS18B20
   humidityController.setDesiredHumidity(&desiredHumidity); // Configuración de la humedad deseada
-  temperatureController.setDesiredTemperature(&desiredTemperature); // Configuración de la temperatura deseada
   ChocoBoxREST::_bufferSize = buffer_size; // Configuración del tamaño del buffer de datos
 
   //Se asocian las variables de temperatura con su promedio
@@ -316,6 +318,8 @@ void setup() {
   connecT.addGETtoWeb("/reset", ChocoBoxREST::GETReset);
 
   (connecT.getServerPointer())->begin();
+
+  Serial.println("Void setUp complete!");
 }
 
 void loop() {

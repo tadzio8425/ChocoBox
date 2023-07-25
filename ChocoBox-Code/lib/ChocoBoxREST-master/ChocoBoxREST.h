@@ -20,10 +20,18 @@ void create_json(char *tag, float value, char *unit) {
 namespace ChocoBoxREST{
 
     WebServer* _serverPointer;
-    float* _temperatureArray;
-    float* _humidityArray;
     bool* _resetPointer;
     int _bufferSize;
+
+    float*  _refTemp;
+    float* _refHumid;
+
+    float* _tempA;
+    float* _tempB;
+    float* _tempC;
+    float* _tempD;
+
+    float* _humidity;
 
     void add_json_object(char *tag, float value, char *unit) {
         JsonObject obj = jsonDocument.createNestedObject();
@@ -40,17 +48,30 @@ namespace ChocoBoxREST{
         _serverPointer = serverPointer;
     }
 
+    //Métodos GET
+    void GETAll(){
+      jsonDocument.clear();
 
-    //Métodos PUT
-    void putReset(){
+      //Referencias
+      add_json_object("refTemp", (*_refTemp), "C");
+      add_json_object("refHumid", (*_refHumid), "%");
+
+      //Valores
+      add_json_object("tempA", (*_tempA), "C");
+      add_json_object("tempB", (*_tempB), "C");
+      add_json_object("tempC", (*_tempC), "C");
+      add_json_object("tempD", (*_tempD), "C");
+      add_json_object("humidity", (*_humidity), "%");
+      serializeJson(jsonDocument, buffer); 
+      (*_serverPointer).send(200, "application/json", buffer);
+  }
+
+
+    void GETReset(){
         jsonDocument.clear(); // Clear the JSON document before populating it
 
-        if ((*_serverPointer).hasArg("plain") == false) {
-        Serial.println("Esperaba un booleano, recibí: nada.");
-        }
-        String body = (*_serverPointer).arg("plain");
-        deserializeJson(jsonDocument, body);
-        
+        add_json_object("reset", 1, "NA");
+
         //Obtener referencia
         (*_resetPointer) = (double) jsonDocument["reset"];
         
@@ -58,13 +79,32 @@ namespace ChocoBoxREST{
         (*_serverPointer).send(200, "application/json", buffer);
     }
 
-    void linkTemperature(float temperatureArray[]){
-      _temperatureArray = temperatureArray;
+
+    void linkTempA(float* tempA){
+      _tempA = tempA;
+    }
+    void linkTempB(float* tempB){
+      _tempB = tempB;
+    }
+    void linkTempC(float* tempC){
+      _tempC = tempC;
+    }
+    void linkTempD(float* tempD){
+      _tempD = tempD;
     }
 
-    void linkHumidity(float humidityArray[]){
-      _humidityArray = humidityArray;
-    } 
+    void linkHumidity(float* hum){
+      _humidity = hum;
+    }
+
+    void linkRefTemp(float* refT){
+      _refTemp = refT;
+    }
+    void linkRefHumid(float* refH){
+      _refHumid = refH;
+    }
+
+
 
     void linkReset(bool* resetPointer){
         _resetPointer = resetPointer;

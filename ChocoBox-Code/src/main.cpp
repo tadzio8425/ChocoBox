@@ -134,6 +134,7 @@ float ds18b20_C = 0;
 float ds18b20_D = 0;
 
 float global_temp = 0;
+float global_humidity = 0;
 
 /* Variables de control */
 float desiredHumidity = 0; // Variable que almacena la humedad deseada
@@ -155,7 +156,7 @@ Humidifier humidifier; // Instancia de la clase Humidifier: Permite el control d
 Heater heater; // Instancia de la clase Heater: Permite el control del calentador
 DHT dht_01(DHTPIN_01, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
 DHT dht_02(DHTPIN_02, DHTTYPE); // Instancia de la clase DHT: Permite la lectura de los sensores DHT
-HumidityController humidityController(&humidity_01, &humidity_02, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
+HumidityController humidityController(&global_humidity, &humidifier); // Instancia de la clase HumidityController: Permite el control de la humedad
 TemperatureController temperatureController(&global_temp, &heater); // Instancia de la clase TemperatureController: Permite el control de la temperatura
 RTC_DS3231 rtc; // Instancia de la clase RTC_DS3231: Permite la lectura del RTC
 LiquidCrystal_I2C lcd(0x27, 20, 4); // Instancia de la clase LiquidCrystal_I2C: Permite la comunicación con la pantalla LCD
@@ -164,6 +165,7 @@ Preferences preferences; // Instancia de la clase Preferences: Permite el almace
 OneWire oneWire(ONE_WIRE_BUS); //Instancia de la clase OneWire, permite conectarse a los dispositivos que usen este protocolo
 DallasTemperature tempSensors(&oneWire); //Instancia de DallasTemperature para los DS18B20
 MovingAverage* tempAverage = new MovingAverage(); //Objeto que almacenará el promedio de las temperaturas
+MovingAverage* humidAverage = new MovingAverage();
 
 char dateBuff[20];
 
@@ -267,6 +269,10 @@ void setup() {
   tempAverage -> append(&ds18b20_B);
   tempAverage -> append(&ds18b20_C);
 
+  //Se asocian las variables de humedad con su promedio
+  humidAverage -> append(&humidity_01);
+  humidAverage -> append(&humidity_02);
+
 
   /* Configuración de la pantalla LCD */
   lcd.init();
@@ -297,9 +303,17 @@ void setup() {
   /* Se vinculan los apuntadores de los arrays de medición al protocolo REST */
   ChocoBoxREST::linkServer(connecT.getServerPointer());
   ChocoBoxREST::linkReset(resetPointer);
+  ChocoBoxREST::linkTempA(&ds18b20_A);
+  ChocoBoxREST::linkTempB(&ds18b20_B);
+  ChocoBoxREST::linkTempC(&ds18b20_C);
+  ChocoBoxREST::linkTempD(&ds18b20_D);
+  ChocoBoxREST::linkHumidity(&global_humidity);
+  ChocoBoxREST::linkRefTemp(&desiredTemperature);
+  ChocoBoxREST::linkRefHumid(&desiredHumidity);
 
   //Vincular el API REST con el servidor WiFi
-  connecT.addPUTtoWeb("/reset", ChocoBoxREST::putReset);
+  connecT.addGETtoWeb("/", ChocoBoxREST::GETAll);
+  connecT.addGETtoWeb("/reset", ChocoBoxREST::GETReset);
 
   (connecT.getServerPointer())->begin();
 }
@@ -367,8 +381,9 @@ void loop() {
   ds18b20_C = tempSensors.getTempC(sensC_add);
   ds18b20_D = tempSensors.getTempC(sensD_add);
 
-  /* Una vez leídos los sensores, se obtiene el promedio de las temperaturas*/
+  /* Una vez leídos los sensores, se obtiene el promedio de las temperaturas y humedades*/
   global_temp = tempAverage->getAverage();
+  global_humidity = humidAverage ->getAverage();
   
   /* Control de la humedad */
   humidityController.update();
@@ -382,7 +397,7 @@ void loop() {
   uint8_t seconds = (ferm_time - (hours*3600) - (minutes*60));
 
   lcd.setCursor(10, 0);
-  lcd.print((humidity_01+humidity_02)/2);
+  lcd.print(global_humidity);
   lcd.print("%");
 
   lcd.setCursor(13, 1);
@@ -459,7 +474,7 @@ void loop() {
       dataFile.print(",");
       dataFile.print(ds18b20_D, 3);
       dataFile.print(",");
-      dataFile.print((humidity_01+humidity_02)/2, 3);
+      dataFile.print(global_humidity, 3);
       dataFile.print("\n");
       dataFile.flush();
 

@@ -4,22 +4,20 @@
 #include <AutoPID.h>
 
 //Configuración PID y constantes
-#define OUTPUT_MIN 0
-#define OUTPUT_MAX 1
-#define KP 0.12
-#define KI 0.03
+#define KP 1.8
+#define KI 0.0003
 #define KD 0
 
 //Instanciación PID
 
 
 TemperatureController::TemperatureController(double* desiredTemperature, double* temperature, Heater* heater):
-    _myPID(temperature, desiredTemperature, &_output, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD)
+    _myPID(temperature, desiredTemperature, &_output, 5000, KP, KI, KD)
 {
     _heater = heater;
 
-    //Si la temperatura es mayor o menor a 0.5 grados, se satura al mínimo o máximo
-    (_myPID).setBangBang(0.5);
+    //Si la temperatura es mayor o menor a 2 grados, se satura al mínimo o máximo
+    (_myPID).setBangBang(2);
     //Intervalo de actualización a 4000ms
     (_myPID).setTimeStep(4000);
 }
@@ -37,4 +35,6 @@ void TemperatureController::update()
     {
         _heater->turnOFF();
     }
+
+    Serial.println(_output);
 }

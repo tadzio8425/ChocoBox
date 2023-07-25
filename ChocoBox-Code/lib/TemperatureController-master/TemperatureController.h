@@ -11,9 +11,9 @@ class TemperatureController{
         void update();
 
     private:
-        double _output = 0;
+        bool _output = false;
         Heater* _heater;
-        AutoPID _myPID;
+        AutoPIDRelay _myPID;
 };
 
 #endif

@@ -17,7 +17,7 @@ TemperatureController::TemperatureController(double* desiredTemperature, double*
     _heater = heater;
 
     //Si la temperatura es mayor o menor a 2 grados, se satura al mínimo o máximo
-    (_myPID).setBangBang(2);
+    (_myPID).setBangBang(0.2);
     //Intervalo de actualización a 4000ms
     (_myPID).setTimeStep(4000);
 }

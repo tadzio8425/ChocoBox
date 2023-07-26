@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "ChocolalApp",
+    "slug": "ChocolalApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/chocolalApp_logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/hot-chocolate.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tadzio8425.ChocolalApp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "52a9c005-cde8-444c-bffa-2c9d64f6933a"
+      }
+    },
+    "android": {
+      "package": "com.tadzio8425.ChocolalApp"
+    }
+  }
+}

@@ -312,10 +312,15 @@ void setup() {
   ChocoBoxREST::linkHumidity(&global_humidity);
   ChocoBoxREST::linkRefTemp(&desiredTemperature);
   ChocoBoxREST::linkRefHumid(&desiredHumidity);
+  ChocoBoxREST::linkTemperature(&global_temp);
+  ChocoBoxREST::linkHumLeft(&humidity_01);
+  ChocoBoxREST::linkHumRight(&humidity_02);
+  ChocoBoxREST::linkHeaterOn(&(temperatureController._output));
+  ChocoBoxREST::linkHumidOn(&(humidifier.isOn));
 
   //Vincular el API REST con el servidor WiFi
   connecT.addGETtoWeb("/", ChocoBoxREST::GETAll);
-  connecT.addGETtoWeb("/reset", ChocoBoxREST::GETReset);
+  connecT.addPUTtoWeb("/reset", ChocoBoxREST::PUTReset);
 
   (connecT.getServerPointer())->begin();
 

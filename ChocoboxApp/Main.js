@@ -66,7 +66,7 @@ export default function Main({navigation}) {
 
   const [visibleRefDia, setVisibleRefDia] = useState(false);
   const [visibleCali, setVisibleCali] = useState(false);
-  const [visibleStop, setVisibleStop] = useState(false);
+  const [visibleReset, setVisibleReset] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [okDisabled, setOkDisabled] = useState(true);
   const [remainingTime, setRemainingTime] = useState(10);
@@ -107,8 +107,22 @@ export default function Main({navigation}) {
       setVisibleCali(false);
   };
 
-  const handleStopOk = () =>{
-    setVisibleStop(false);
+  const handleResetOk = () =>{
+    fetchWithTimeout(`${ESP32IP}/reset`, {
+      method: 'PUT',
+      timeout:1000,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({reset:true})
+    })
+    .catch(function (err){
+      console.log(err);  // Prints "Error: something went terribly wrong"
+  });
+    setVisibleReset(false);
+};
+
+
+const handleResetCancel = () =>{
+  setVisibleReset(false);
 };
 
   const putCalibrate = () =>{
@@ -141,17 +155,8 @@ export default function Main({navigation}) {
       });
   };
 
-  const putStop = () =>{
-    setVisibleStop(true);
-    fetchWithTimeout(`${ESP32IP}/stop`, {
-      method: 'PUT',
-      timeout:1000,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({stop:true})
-    })
-    .catch(function (err){
-      console.log(err);  // Prints "Error: something went terribly wrong"
-  });
+  const putReset = () =>{
+    setVisibleReset(true);
   }
 
 
@@ -191,6 +196,9 @@ export default function Main({navigation}) {
 
   const [globalTemp, setGlobalTemp] = useState({"value":0});
 
+  const[heaterON, setHeaterON] = useState({"value":0});
+  const[humidON, setHumidON] = useState({"value":0});
+  
   const loadData = useCallback(async () => {
     try {
       const response = await fetch(`${ESP32IP}/`);
@@ -207,6 +215,8 @@ export default function Main({navigation}) {
       setHumidLeft(dataJSON[7]);
       setHumidRight(dataJSON[8]);
       setGlobalTemp(dataJSON[9]);
+      setHeaterON(dataJSON[10]);
+      setHumidON(dataJSON[11]);
       
     } catch (error) {
       console.log(error);
@@ -319,7 +329,7 @@ export default function Main({navigation}) {
       </View>
 
       <View style={styles.bottomContainer}>
-      <TouchableOpacity onPress={putStop}>
+      <TouchableOpacity onPress={putReset}>
           <Image style = {{width:50, height:50}} source={require("./assets/images/offButton.png")}/>
       </TouchableOpacity>
       </View>
@@ -358,12 +368,13 @@ export default function Main({navigation}) {
 </Dialog.Container>
 
 
-    <Dialog.Container visible={visibleStop}>
-      <Dialog.Title>Stop</Dialog.Title>
+    <Dialog.Container visible={visibleReset}>
+      <Dialog.Title>Reset</Dialog.Title>
       <Dialog.Description>
-            Se ha detenido y reiniciado la chocolatera.
+        ¿Está seguro que que desea reiniciar la fermentación desde 0?
       </Dialog.Description>
-      <Dialog.Button label="OK" onPress={handleStopOk}/>
+      <Dialog.Button label="OK" onPress={handleResetOk}/>
+      <Dialog.Button label="Cancel" onPress={handleResetCancel}/>
     </Dialog.Container>
 
 

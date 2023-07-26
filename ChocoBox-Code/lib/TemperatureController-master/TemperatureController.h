@@ -7,11 +7,12 @@
 
 class TemperatureController{
     public:
+        bool _output = false;
         TemperatureController(double* desiredTemperature, double* temperature, Heater* heater);
         void update();
 
     private:
-        bool _output = false;
+        
         Heater* _heater;
         AutoPIDRelay _myPID;
 };

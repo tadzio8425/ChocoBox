@@ -9,10 +9,10 @@ class Humidifier
             void setPressDelay(int pressDelay);
             void turnON();
             void turnOFF();
+            bool isOn = false; 
         private:
             int _humidifier_pin;
             int _pressDelay = 400;
-            bool isOn = false;  
     };
 
 #endif

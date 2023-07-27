@@ -227,11 +227,33 @@ const handleResetCancel = () =>{
 
   
 
+  changeColor = () => {
+    if(heaterON["value"] == 1){
+      setResColor("red");
+    }
+    else{
+      setResColor("#b47b42");
+    }
+
+    if(humidON["value"] == 1){
+      setHumColor("blue");
+    }
+    else{
+      setHumColor("white");
+    }
+  }
+
   useEffect(() => {
     const interval = setInterval(loadData, 1000);
     return () => clearInterval(interval);
   }, [loadData]);
 
+  useEffect(() => {
+    const interval = setInterval(() => changeColor(), 1000);
+    return () => {
+      clearInterval(interval);
+    }
+  })
 
 
   sliderValueChange = (value) => {
@@ -318,7 +340,7 @@ const handleResetCancel = () =>{
         alignItems:"center", padding:0}]}>  
 
           <View style={styles.resistorPin}></View>
-          <View style={[styles.resistor, {backgroundColor:resColor}]}></View>
+          <View style={[styles.resistor, {backgroundColor:resColor, opacity:0.6}]}></View>
           <View style={styles.resistorPin}></View>
           
         </View>

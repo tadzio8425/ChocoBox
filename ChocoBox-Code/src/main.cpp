@@ -40,6 +40,8 @@ File dataFile;
 File environmentFile;
 File splineFile;
 
+File dataFileApp;
+
 
 /* Funciones de ayuda */
 void printVector(const std::vector<float>& vec) {
@@ -208,6 +210,58 @@ void updateEnvironment(){
   vq_humidity.clear();
 }
 
+//Download a file from the SD, it is called in void SD_dir()
+void downloadDataLog()
+{
+  {
+    File download = SD.open("/datalog.txt");
+    if (download) 
+      {
+        (connecT.getServerPointer()) -> sendHeader("Content-Type", "text/text");
+        (connecT.getServerPointer()) -> sendHeader("Content-Disposition", "attachment; filename=datalog.txt");
+        (connecT.getServerPointer()) -> sendHeader("Connection", "close");
+        (connecT.getServerPointer()) -> streamFile(download, "application/octet-stream");
+        download.close();
+      } else Serial.println("Error sending a file!"); 
+  }
+
+}
+
+
+//Handles the file upload a file to the SD
+File UploadFile;
+//Upload a new file to the Filing system
+void handleFileUpload()
+{ 
+  HTTPUpload& uploadfile = (connecT.getServerPointer()) -> upload(); //See https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WebServer/srcv
+                                            //For further information on 'status' structure, there are other reasons such as a failed transfer that could be used
+  if(uploadfile.status == UPLOAD_FILE_START)
+  {
+    String filename = uploadfile.filename;
+    if(!filename.startsWith("/")) filename = "/"+filename;
+    Serial.print("Upload File Name: "); Serial.println(filename);
+    SD.remove(filename);                         //Remove a previous version, otherwise data is appended the file again
+    UploadFile = SD.open(filename, FILE_WRITE);  //Open the file for writing in SD (create it, if doesn't exist)
+    filename = String();
+  }
+  else if (uploadfile.status == UPLOAD_FILE_WRITE)
+  {
+    if(UploadFile) UploadFile.write(uploadfile.buf, uploadfile.currentSize); // Write the received bytes to the file
+  } 
+  else if (uploadfile.status == UPLOAD_FILE_END)
+  {
+    if(UploadFile)          //If the file was successfully created
+    {                                    
+      UploadFile.close();   //Close the file again
+      Serial.print("Upload Size: "); Serial.println(uploadfile.totalSize);
+      (connecT.getServerPointer()) -> send(200,"text/html", "File uploaded!");
+    } 
+    else
+    {
+      (connecT.getServerPointer()) -> send(501,"text/html", "Error!");
+    }
+  }
+}
 
 
 void setup() {
@@ -321,7 +375,8 @@ void setup() {
   //Vincular el API REST con el servidor WiFi
   connecT.addGETtoWeb("/", ChocoBoxREST::GETAll);
   connecT.addPUTtoWeb("/reset", ChocoBoxREST::PUTReset);
-
+  connecT.addGETtoWeb("/dataLog", downloadDataLog);
+  connecT.getServerPointer() -> on("/upload",  HTTP_POST,[](){ (connecT.getServerPointer()) -> send(200);}, handleFileUpload);
   (connecT.getServerPointer())->begin();
 
   Serial.println("Void setUp complete!");
@@ -370,6 +425,10 @@ void loop() {
 
     lcd.setCursor(0, 3);
     lcd.print("Time: ");
+    
+
+    //Re calcula el spline
+    updateEnvironment();
 
   }
 

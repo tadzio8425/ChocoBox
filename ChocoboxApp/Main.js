@@ -13,7 +13,8 @@ import Slider from '@react-native-community/slider';
 import { height } from '@mui/system';
 import MarkSlider from 'react-native-mark-slider';
 import { CountdownCircleTimer } from 'react-native-countdown-circle-timer';
- 
+import * as WebBrowser from 'expo-web-browser';
+import * as DocumentPicker from 'expo-document-picker';
 
 const marks = [
   { name: '0  RPM', value: 0 },
@@ -160,6 +161,54 @@ const handleResetCancel = () =>{
     setVisibleReset(true);
   }
 
+  const downloadDataLog = async() =>{
+    let result = await WebBrowser.openBrowserAsync(`${ESP32IP}/dataLog`);
+  }
+
+
+
+const uploadFile = async () => {
+  let singleFile = await DocumentPicker.getDocumentAsync({});
+  
+
+  // Check if any file is selected or not
+  if (singleFile != null) {
+    // If file selected then create FormData
+    const data = new FormData();
+
+    data.append('file_attachment', {
+      uri: singleFile.uri,
+      name: singleFile.name,
+      type: singleFile.mimeType,
+    });
+
+    // return
+    try {
+      let res = await fetchWithTimeout(ESP32IP + '/upload', {
+        method: 'post',
+        body: data,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 5000,
+      });
+
+      let result = await res.json();
+      console.log('result', result);
+      if (result.status == 1) {
+        Alert.alert('Info', result.msg);
+      }
+    } catch (error) {
+      // Error retrieving data
+      // Alert.alert('Error', error.message);
+      console.log('error upload', error);
+    }
+  } else {
+    // If no file selected the show alert
+    Alert.alert('Please Select File first');
+  }
+};
 
   const putRPM = (value) =>{
 
@@ -200,6 +249,9 @@ const handleResetCancel = () =>{
 
   const[resColor, setResColor]= useState("#b47b42");
   const[humidColor, setHumColor]= useState("white");
+
+
+  const [selected, setSelected] = useState(false);
   
   const loadData = useCallback(async () => {
     try {
@@ -354,45 +406,31 @@ const handleResetCancel = () =>{
 
       </View>
 
-      <View style={styles.bottomContainer}>
+      <View style={[styles.bottomContainer]}>
       <TouchableOpacity onPress={putReset}>
           <Image style = {{width:50, height:50}} source={require("./assets/images/offButton.png")}/>
       </TouchableOpacity>
+
+
+
+      
+    <Pressable 
+    onPressIn = {() => {
+      setSelected(!selected);
+    }}
+
+   onPressOut = {() => {
+    setSelected(!selected);      
+    setModalVisible(true);
+    }}
+   
+   style={[selected ? styles.unpressedButton: styles.pressedButton, {marginLeft:20, marginTop:95}]}
+   
+   >
+      <Text style={styles.buttonText}>Data</Text>
+
+    </Pressable>
       </View>
-
-    
-    <Dialog.Container visible={visibleRefDia}>
-      <Dialog.Title>Dosificar</Dialog.Title>
-      <Dialog.Description>
-          Ingrese el valor a dosificar en mL:
-        </Dialog.Description>
-      <DialogInput style={{color:'black'}} keyboardType="numeric" onChangeText={ (inputText) => {setteable_reference = inputText.replace(",",".")} }></DialogInput>
-      <Dialog.Button label="Cancel" onPress={handleRefCancel}/>
-        <Dialog.Button label="OK" onPress={handleRefOk}/>
-    </Dialog.Container>
-
-
-  <Dialog.Container visible={visibleCali} contentStyle={{paddingBottom: 20}}>
-  <Dialog.Title>Calibrar</Dialog.Title>
-  <Dialog.Description>
-    Se está calibrando la balanza...
-  </Dialog.Description>
-  <View style={{ alignItems: 'center' }}>
-    <CountdownCircleTimer
-      isPlaying
-      duration={10}
-      size = {120}
-      colors={['#3a6f8a', '#3a9099', '#32b3a1','#1fd9a7', '#56f0a0', "#99ffa2", "#6ce4c4"]}
-      colorsTime={[10,9,7,5,4,2,0]}
-      onComplete={() => {setRemainingTime(0), handleCalOk()}}>
-      {({ remainingTime }) => {
-          setRemainingTime(remainingTime);
-          return <Text>{remainingTime}</Text>;
-        }}
-    </CountdownCircleTimer>
-  </View>
-</Dialog.Container>
-
 
     <Dialog.Container visible={visibleReset}>
       <Dialog.Title>Reset</Dialog.Title>
@@ -406,35 +444,22 @@ const handleResetCancel = () =>{
 
     <Modal isVisible={isModalVisible}>
       <View style={[{ flex: 1 }, styles.modal]}>
-        <Text style={{fontSize:20, fontWeight:"bold", marginTop:20}}>Velocidad de mezcla</Text>
+        <Text style={{fontSize:20, fontWeight:"bold", marginTop:20}}>Datos de fermentación</Text>
         
 
-        <MarkSlider style={{minWidth:"90%", minHeight:40, zIndex:1000}}
-              step={1}
-              max={300}
-              marks={marks}
-              onChange={value => {putRPM(value), setSliderValue(value)}}
-          />
-        <View style={{backgroundColor:"#BD8E79", width:80, borderRadius:20, height:40, flexWrap:"wrap",
-        justifyContent:'center', alignContent:"center", alignItems:"center"}}>
-          <TextInput
-          style = {{color:"black", fontWeight:"bold", marginRight:2}}
-          placeholder= {`${actualRPM}`}
-          keyboardType="numbers-and-punctuation"
-          onChangeText={text => {setSliderValue(text), putRPM(text)}}
-          value={`${sliderValue}`}
-          />
-          <Text style={{ marginLeft:2}}>RPM</Text>
-        </View>
-      
-      <Pressable style={[styles.pressedButton, {width:100,height:40, borderRadius:10, marginBottom:30, marginTop:40}]}  onPressOut = {() => {toggleModal()}}>
-        <Text style={[styles.buttonText]}>Cerrar</Text>
+        <Pressable style={[styles.pressedButton, {marginBottom:0,opacity:0.9, margin:0}]}  onPressOut = {() => {downloadDataLog()}}>
+        <Text style={[styles.buttonText, {textAlign:"center", fontSize:16}]}>Descargar dataLog</Text>
       </Pressable>
 
+      
+      <Pressable style={[styles.pressedButton, {marginBottom:0, opacity:0.9, margin:0}]}  onPressOut = {() => {uploadFile()}}>
+        <Text style={[styles.buttonText, {textAlign:"center", fontSize:16}]}>Subir environment.txt</Text>
+      </Pressable>
 
-      <View>
-        <Text style={{color:"grey"}}>{tempB["value"].toFixed(0) + " RPM"}</Text>
-      </View>
+      
+      <Pressable style={[styles.pressedButton, {marginBottom:0,width:100,height:40, borderRadius:10, margin:0}]}  onPressOut = {() => {toggleModal()}}>
+        <Text style={[styles.buttonText]}>Cerrar</Text>
+      </Pressable>
 
       </View>
 
@@ -539,7 +564,7 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       marginTop: 50,
       marginBottom:100,
-      opacity: 0.7,
+      opacity: 0.8,
       shadowColor: '#171717',
       shadowOffset: {width: -2, height: 4},
       shadowOpacity: 0.4,

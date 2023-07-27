@@ -3,8 +3,8 @@
 #include <ArduinoJson.h>
 
 // JSON data buffer
-StaticJsonDocument<500> jsonDocument;
-char buffer[500];
+StaticJsonDocument<1200> jsonDocument;
+char buffer[1200];
 
 
 //Funciones de manejo JSON Auxiliares

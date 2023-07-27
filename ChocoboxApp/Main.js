@@ -45,6 +45,7 @@ export default function Main({navigation}) {
   const [sliderValue, setSliderValue] = useState(0); // initial value of the slider
   const [toggleSlider, setToggleSlider] =useState(false);  
   
+
   // function to handle changes in slider value
 
   
@@ -175,8 +176,6 @@ const handleResetCancel = () =>{
       console.log(err);  // Prints "Error: something went terribly wrong"
   });
   }
-
-
   const [avgTemp, setAvgTemp] = useState({"value":0});
 
   const [dataJSON, setData] = useState(true);
@@ -198,6 +197,9 @@ const handleResetCancel = () =>{
 
   const[heaterON, setHeaterON] = useState({"value":0});
   const[humidON, setHumidON] = useState({"value":0});
+
+  const[resColor, setResColor]= useState("#b47b42");
+  const[humidColor, setHumColor]= useState("white");
   
   const loadData = useCallback(async () => {
     try {
@@ -217,17 +219,18 @@ const handleResetCancel = () =>{
       setGlobalTemp(dataJSON[9]);
       setHeaterON(dataJSON[10]);
       setHumidON(dataJSON[11]);
-      
     } catch (error) {
       console.log(error);
     }
   }, []);
 
+
+  
+
   useEffect(() => {
     const interval = setInterval(loadData, 1000);
     return () => clearInterval(interval);
   }, [loadData]);
-
 
 
 
@@ -249,6 +252,8 @@ const handleResetCancel = () =>{
     
   }
 
+
+  
 
 
   return (
@@ -300,8 +305,7 @@ const handleResetCancel = () =>{
             <Text style={styles.numberText}>{humidLeft["value"].toFixed(2)} {"%"}</Text>
         </View>
 
-          <Ring size={85}></Ring>
-
+          <Ring size={85} colorXD={humidColor}></Ring>
 
         <View style = {[styles.miniTextBox, {maxWidth:'25%'}]}>
             <Text style={styles.numberText}>{humidRight["value"].toFixed(2)} {"%"}</Text>
@@ -314,7 +318,7 @@ const handleResetCancel = () =>{
         alignItems:"center", padding:0}]}>  
 
           <View style={styles.resistorPin}></View>
-          <View style={styles.resistor}></View>
+          <View style={[styles.resistor, {backgroundColor:resColor}]}></View>
           <View style={styles.resistorPin}></View>
           
         </View>
@@ -442,7 +446,7 @@ const ChocoTextBox = ({text, units}) => (
 )
 
 
-const Ring = ({ size }) => {
+const Ring = ({ size, colorXD }) => {
   return (
     <View
       style={[
@@ -467,7 +471,7 @@ const Ring = ({ size }) => {
           height: size/4,
           borderRadius: size / 2,
           borderWidth: (size * 5) / 200,
-          backgroundColor:"blue",
+          backgroundColor: colorXD,
           borderColor:"black",
           opacity:0.6
         },
@@ -535,7 +539,6 @@ const styles = StyleSheet.create({
     resistor:{
       width:"75%",
       height:"15%",
-      backgroundColor:"#b47b42",
       opacity:0.8
     },
 

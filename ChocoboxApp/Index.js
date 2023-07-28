@@ -155,9 +155,6 @@ const styles = StyleSheet.create({
         alert('No se ha podido conectar al dispositivo.');
         console.error(error);
       });
-
-      //TO-DO: ELIMINAR
-      navigation.navigate('Main');
   };
   
   

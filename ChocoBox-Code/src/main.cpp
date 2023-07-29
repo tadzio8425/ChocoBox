@@ -407,7 +407,7 @@ void loop() {
     //Se resetean los datos de la SD
     dataFile = SD.open("/datalog.txt", FILE_WRITE);
     dataFile = SD.open("/datalog.txt", FILE_APPEND);
-    dataFile.print("time,temperature,resTemp,humidity\n");
+    dataFile.print("time(min),tempA(degC),tempB(degC),tempC(degC),tempD(degC),humidLeft(%),humidRight(%)\n");
     dataFile.flush();
 
     //Se reinicia el display
@@ -536,13 +536,19 @@ void loop() {
       prev_index = index;
 
       /*Se suben los datos a la SD*/
-      dataFile.print(ferm_time);
+      dataFile.print(ferm_time/60.0);
       dataFile.print(",");
-      dataFile.print(global_temp, 3);
+      dataFile.print(ds18b20_A, 3);
+      dataFile.print(",");
+      dataFile.print(ds18b20_B, 3);
+      dataFile.print(",");
+      dataFile.print(ds18b20_C, 3);
       dataFile.print(",");
       dataFile.print(ds18b20_D, 3);
       dataFile.print(",");
-      dataFile.print(global_humidity, 3);
+      dataFile.print(humidity_01, 3);
+      dataFile.print(",");
+      dataFile.print(humidity_02, 3);
       dataFile.print("\n");
       dataFile.flush();
 

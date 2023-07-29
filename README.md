@@ -42,3 +42,28 @@ The environment to be replicated can be easily set in the *environment.txt* file
 <p align="center">
    <i>b. Example of an environment.txt file</i>
 </p>
+
+#### iii. Joining the dots
+In order to replicate how these variables behave smoothly in nature, a cubic spline algorithm is used in order to fill the gaps between the dots set in *environment.txt*. The results of this algorithm are saved by the microcontroller in *spline.txt*, so this file must not be modified in any way by the user. If the **reference values** shown by the system are not logical, please check the *spline.txt* file. A *spline.txt* with **Nan** values or other errors indicates that *environment.txt* was wrongly formated! 
+
+<p align="center">
+   <img align="center" src="https://github.com/tadzio8425/ChocoBox/assets/78126968/4b548579-42e4-4d59-8f7e-05acb526f57b" width="200"/>
+</p>
+<p align="center">
+   <i>c. Example of a correctly generated spline.txt file</i>
+</p>
+
+#### iv. Step by step
+A fundamental part of the spline algorithm is the **step**, this value determines the interval for intermediate points to be calculated and also for data capture. For example, a step of **30 minutes** will make the system update its reference values and save its environmental data each, well, 30 minutes. The smaller the step, the more data will be captured and the smoother the system will be. **Beware of using extremely small steps, as they may lead to a memory overflow in the ESP32!** The **step can be modified by the user**, this will be explained in a further section.
+
+#### v. Getting the data
+All environmental data captured by the sensors is saved in *datalog.txt*, which is automatically updated by the microcontroller. This file includes the sensed information of each individual humidity and temperature sensor, captured each **step**. This file follows the order of the following headers: **time(min), tempA(degC), tempB(degC), tempC(degC), tempD(degC), humidLeft(%), humidRight(%)**
+
+The presence of **Nan** values in this file may indicate a sensor malfunction!
+
+<p align="center">
+   <img align="center" src="https://github.com/tadzio8425/ChocoBox/assets/78126968/3d6e1b88-11cc-4e01-8d4d-01df40d26ecc" width="600"/>
+</p>
+<p align="center">
+   <i>d. Example of a correctly generated datalog.txt file</i>
+</p>

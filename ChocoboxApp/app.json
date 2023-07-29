@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "ChocolalApp",
-    "slug": "ChocolalApp",
+    "name": "ChocoBox",
+    "slug": "ChocoBox",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/chocolalApp_logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/hot-chocolate.png",
+      "image": "./assets/images/package.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tadzio8425.ChocolalApp"
+      "bundleIdentifier": "com.tadzio8425.ChocoBox"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "com.tadzio8425.ChocolalApp"
+      "package": "com.tadzio8425.ChocoBox"
     }
   }
 }

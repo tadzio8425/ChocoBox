@@ -206,7 +206,7 @@ const uploadFile = async () => {
     }
   } else {
     // If no file selected the show alert
-    Alert.alert('Please Select File first');
+    Alert.alert('Please Select File first');``
   }
 };
 
@@ -335,7 +335,7 @@ const uploadFile = async () => {
       <View style={styles.titleContainer}>
         <Image
           style={{width: 60, height: 60}}
-          source={require("./assets/images/hot-chocolate.png")}
+          source={require("./assets/images/package.png")}
         />
         <Text style={styles.title}>ChocoBox</Text>
       </View>
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
       textShadowColor: '#95573A',
       textShadowOffset: {width: 1, height:1},
       textShadowRadius: 2,
-      paddingTop:20,
+      paddingTop:10,
       paddingLeft:"3%",
       width:"100%"
     },

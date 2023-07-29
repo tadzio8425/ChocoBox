@@ -26,7 +26,7 @@ export default function Index({navigation}){
     <TouchableOpacity style={{width:121, height:121}} onPress={setIP}>
     <Image 
       style={styles.image} 
-      source={require("./assets/images/hot-chocolate.png")}
+      source={require("./assets/images/package.png")}
     />
     </TouchableOpacity>
 
@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
         alert('No se ha podido conectar al dispositivo.');
         console.error(error);
       });
+      
   };
   
   

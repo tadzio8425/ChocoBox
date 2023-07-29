@@ -67,3 +67,19 @@ The presence of **Nan** values in this file may indicate a sensor malfunction!
 <p align="center">
    <i>d. Example of a correctly generated datalog.txt file</i>
 </p>
+
+## 2. PCB Connections
+Handling the PCB should be avoided at all costs. However, in the case that something has gone wrong or a new interface/sensor needs to be added, the following connection diagram should be **strictly** followed. All cables are marked with their respective signal.
+
+| PCB Overview |
+| --- |
+|   <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/2ca30238-0328-40cd-a029-abc4c8aa6681"/>|
+
+
+| DS18B20 (Temp) | DHT22 (Hum) | MicroSD |
+| --- | --- | --- |
+|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/e798d74c-2ffb-4cd0-bbee-7f32eb367f21" width="500" />|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/e02e660b-304e-4cde-aec5-374b74cfa1c3"  width="300"/>|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/c6e60fec-fcf8-40fd-8cd9-fb2a80f35659"  width="200"/>|
+
+| I2C (LCD Screen and Clock) | Humidifier and Heater Relay | 12V and WaterLevel |
+| --- | --- | --- |
+|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/1ee6aa29-79af-438c-a5d3-52213d45c570" width="400" />|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/7eeb919b-750c-42ed-8d26-0e261e60b264"  width="300"/>|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/bb71bde5-03ff-42f6-b883-859d3c83a884"  width="300"/>|

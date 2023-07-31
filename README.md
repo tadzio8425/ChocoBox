@@ -67,3 +67,52 @@ The presence of **Nan** values in this file may indicate a sensor malfunction!
 <p align="center">
    <i>d. Example of a correctly generated datalog.txt file</i>
 </p>
+
+## 2. PCB Connections
+Handling the PCB should be avoided at all costs. However, in the case that something has gone wrong or a new interface/sensor needs to be added, the following connection diagram should be **strictly** followed. All cables are marked with their respective signal.
+
+| PCB Overview |
+| --- |
+|   <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/2ca30238-0328-40cd-a029-abc4c8aa6681"/>|
+
+
+| DS18B20 (Temp) | DHT22 (Hum) | MicroSD |
+| --- | --- | --- |
+|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/e798d74c-2ffb-4cd0-bbee-7f32eb367f21" width="500" />|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/e02e660b-304e-4cde-aec5-374b74cfa1c3"  width="300"/>|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/c6e60fec-fcf8-40fd-8cd9-fb2a80f35659"  width="200"/>|
+
+| I2C (LCD Screen and Clock) | Humidifier and Heater Relay | 12V and WaterLevel |
+| --- | --- | --- |
+|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/1ee6aa29-79af-438c-a5d3-52213d45c570" width="400" />|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/7eeb919b-750c-42ed-8d26-0e261e60b264"  width="300"/>|<img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/bb71bde5-03ff-42f6-b883-859d3c83a884"  width="300"/>|
+
+## 3. Cable management
+ChocoBox uses an electric extension to power itself, the extension input should be conected directly to the power socket. This extesion has 3 available output sockets, of which only 2 are actually used. One of the sockets must me connected to the **resistor cable**, which handles the power given to the heating resistors. The second socket must be connected to a **12V-2A** power supply that powers the electronics. The output of the power supply is a **jack connector** which goes directly into the PCB box. Remember that you may find the extension sockets on the floor, behind the resistor wooden holder. Please make sure that all major cables are correctly pluged-in before performing any test, also **do not handle cables under any circumstance unless the resistors are totally cold**.
+
+- To completely **TURN-OFF** the system, you only need to unplug the extension input from the power socket.
+
+## 4. Operating the system
+Once everything is pluged-in, the system should start to work autonomously. This means that the desired values from *environment.txt* will be replicated inside the box, following the intermidiate points generated in *spline.txt* and the actual sensed values will be saved each **step** in *datalog.txt*.
+
+### i. Monitoring 01: LCD Screen
+The most straigth-forward method to monitor the system is by looking at its **20x4 LCD Screen**. This screen depicts the following data, line by line:
+  1. **Humidity**: Displays the current humidity average inside the box in (%).
+  2. **Temperature**: Displays the current temperature average inside the box in (°C).
+  3. **Ref**: Displays the reference values that the system should be trying to achieve in that specific moment.
+  4. **Time**: Displays how much time has the system been on a specific fermentation cycle. This timer **DOES NOT** reset when the system is disconnected, as it is programmed to retake fermentation despite a possible temporal failure. However, it can be reset **manually**.
+
+| LCD Screen |
+| --- |
+|   <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/86ba16e2-e9bb-4801-be05-0a802ff2d71b" width="350px"/>|
+
+
+### ii. Connecting to the ESP32 via WiFi
+The ESP32 is set in *AP* mode, which means that it acts as an *Access Point* (A.K.A. its own WiFi network). In order to connect, simply search for the network called **ChocoBox** and establish a connection using the **secret password**. It is **important** that this password is only given to authorized staff, otherwise, a fermentation cycle could be jeopardized.
+
+- **Once connected to the _ChocoBox_ network, the ESP32 can be accessed using its IP Address which will always be:**
+- **192.168.1.1**
+
+### iii. Monitoring 02: Rest API
+
+
+
+### iv. Monitoring 03: App
+

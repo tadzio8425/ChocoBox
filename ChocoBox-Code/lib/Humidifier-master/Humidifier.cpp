@@ -18,6 +18,7 @@ void Humidifier::setPressDelay(int pressDelay)
 void Humidifier::turnON()
 {
     if(!isOn){
+        delay(_pressDelay);
         digitalWrite(_humidifier_pin, HIGH);
         delay(_pressDelay);
         digitalWrite(_humidifier_pin, LOW);
@@ -28,6 +29,7 @@ void Humidifier::turnON()
 void Humidifier::turnOFF()
 {
     if(isOn){
+        delay(_pressDelay);	
         digitalWrite(_humidifier_pin, HIGH);
         delay(_pressDelay);
         digitalWrite(_humidifier_pin, LOW);

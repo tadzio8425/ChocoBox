@@ -176,11 +176,7 @@ const uploadFile = async () => {
     // If file selected then create FormData
     const data = new FormData();
 
-    data.append('file_attachment', {
-      uri: singleFile.uri,
-      name: singleFile.name,
-      type: singleFile.mimeType,
-    });
+    data.append("environment", singleFile, "environment.txt");
 
     // return
     try {

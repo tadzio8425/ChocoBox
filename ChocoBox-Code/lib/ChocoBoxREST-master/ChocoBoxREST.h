@@ -1,11 +1,13 @@
 #include "Arduino.h"
 #include <WebServer.h>
 #include <ArduinoJson.h>
+#include <Preferences.h>
 
 // JSON data buffer
 StaticJsonDocument<1200> jsonDocument;
 char buffer[1200];
 
+Preferences* _preferences;
 
 //Funciones de manejo JSON Auxiliares
 void create_json(char *tag, float value, char *unit) {  
@@ -40,6 +42,10 @@ namespace ChocoBoxREST{
 
     bool* _heaterOn;
     bool* _humidifierOn;
+
+    float* _step;
+
+    
 
     void add_json_object(char *tag, float value, char *unit) {
         JsonObject obj = jsonDocument.createNestedObject();
@@ -102,6 +108,24 @@ namespace ChocoBoxREST{
         (*_serverPointer).send(200, "application/json", buffer);
     }
 
+
+    void PUTStep(){
+        jsonDocument.clear(); // Clear the JSON document before populating it
+
+        if ((*_serverPointer).hasArg("plain") == false) {
+        Serial.println("Esperaba un float, recibí: nada.");
+        }
+        String body = (*_serverPointer).arg("plain");
+        deserializeJson(jsonDocument, body);
+        
+        //Obtener step nuevo
+        (*_step) = (double) jsonDocument["step"];
+        (_preferences) -> putFloat("step", (*_step));
+        
+        //Se responde con la nueva referencia
+        (*_serverPointer).send(200, "application/json", buffer);
+    }
+
     void linkTempA(float* tempA){
       _tempA = tempA;
     }
@@ -152,6 +176,14 @@ namespace ChocoBoxREST{
 
     void linkReset(bool* resetPointer){
         _resetPointer = resetPointer;
+    }
+
+    void linkStep(float* step){
+      _step = step;
+    }
+
+    void linkPreferences(Preferences* pref){
+      _preferences = pref;
     }
     
 

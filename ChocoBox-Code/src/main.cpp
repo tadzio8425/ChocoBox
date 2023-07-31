@@ -32,7 +32,7 @@ std::vector<float> vq_temp;
 std::vector<float> vq_humidity;
 
 const int numOfHours = 336; // Número de horas que dura la fermentación
-const float paso = 0.05; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas
+float paso = 0.5; // Paso de la interpolación - Se cambia la temperatura y la humedad cada {paso} horas - Default cada media hora
 const int buffer_size = numOfHours/paso;
 
 //Archivos tarjeta SD
@@ -306,6 +306,17 @@ void setup() {
   }
 
 
+  //Se guarda el STEP en memoria secundaria
+  if(!preferences.isKey("step")){
+    preferences.putFloat("step", paso);
+  }
+  else{
+    paso = preferences.getFloat("step");
+  }
+
+
+
+
   // Se re-establece el tiempo cuando el RTC pierde potencia o cuando está nuevo
   if (rtc.lostPower()) {
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -371,10 +382,13 @@ void setup() {
   ChocoBoxREST::linkHumRight(&humidity_02);
   ChocoBoxREST::linkHeaterOn(&(temperatureController._output));
   ChocoBoxREST::linkHumidOn(&(humidifier.isOn));
+  ChocoBoxREST::linkStep(&paso);	
+  ChocoBoxREST::linkPreferences(&preferences);
 
   //Vincular el API REST con el servidor WiFi
   connecT.addGETtoWeb("/", ChocoBoxREST::GETAll);
   connecT.addPUTtoWeb("/reset", ChocoBoxREST::PUTReset);
+  connecT.addPUTtoWeb("/step",  ChocoBoxREST::PUTStep);
   connecT.addGETtoWeb("/dataLog", downloadDataLog);
   connecT.getServerPointer() -> on("/upload",  HTTP_POST,[](){ (connecT.getServerPointer()) -> send(200);}, handleFileUpload);
   (connecT.getServerPointer())->begin();

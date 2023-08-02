@@ -54,31 +54,47 @@ void printVector(const std::vector<float>& vec) {
 
 
 void extractEnvironmentData(const String& data, std::vector<float>& hourVec,
-                 std::vector<float>& temperatureVec, std::vector<float>& humidityVec) {
+                            std::vector<float>& temperatureVec, std::vector<float>& humidityVec) {
     int startIndex = 0;
     int endIndex = data.indexOf('\n');
     bool isFirstLine = true;  // Flag to skip the first line
+    bool skipNextLine = false; // Flag to skip the next line if the current line is the first line
     while (endIndex != -1) {
-        String line = data.substring(startIndex, endIndex);
-        int commaIndex1 = line.indexOf(',');
-        int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
-        if (!isFirstLine && commaIndex1 != -1 && commaIndex2 != -1) {
-            float hour = line.substring(0, commaIndex1).toFloat();
-            float temperature = line.substring(commaIndex1 + 1, commaIndex2).toFloat();
-            float humidity = line.substring(commaIndex2 + 1).toFloat();
-            hourVec.push_back(hour);
-            temperatureVec.push_back(temperature);
-            humidityVec.push_back(humidity);
-        }
-        isFirstLine = false;
-        startIndex = endIndex + 1;
-        endIndex = data.indexOf('\n', startIndex);
-        if (endIndex == -1 && startIndex < data.length()) {
-            // Handle the last line if it doesn't end with a newline character
-            endIndex = data.length();
+        if (skipNextLine) {
+            // Skip the current line (the second line)
+            startIndex = endIndex + 1;
+            endIndex = data.indexOf('\n', startIndex);
+            skipNextLine = false; // Reset the flag
+        } else {
+            String line = data.substring(startIndex, endIndex);
+            int commaIndex1 = line.indexOf(',');
+            int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
+            if (!isFirstLine && commaIndex1 != -1 && commaIndex2 != -1) {
+                float hour = line.substring(0, commaIndex1).toFloat();
+                float temperature = line.substring(commaIndex1 + 1, commaIndex2).toFloat();
+                float humidity = line.substring(commaIndex2 + 1).toFloat();
+                hourVec.push_back(hour);
+                temperatureVec.push_back(temperature);
+                humidityVec.push_back(humidity);
+            }
+            isFirstLine = false;
+            startIndex = endIndex + 1;
+            endIndex = data.indexOf('\n', startIndex);
+            if (endIndex == -1 && startIndex < data.length()) {
+                // Handle the last line if it doesn't end with a newline character
+                endIndex = data.length();
+            }
+            if (endIndex != -1) {
+                // Check if the next line is the second line (contains a '\n' before the first line)
+                String nextLine = data.substring(startIndex, endIndex);
+                if (nextLine.indexOf('\n') != -1) {
+                    skipNextLine = true; // Set the flag to skip the next line
+                }
+            }
         }
     }
 }
+
 
 
 void sendSplineSD(const std::vector<float>& hourVec,

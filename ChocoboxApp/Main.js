@@ -198,7 +198,11 @@ const uploadFile = async () => {
     // If file selected then create FormData
     const data = new FormData();
 
-    data.append("environment", singleFile, "environment.txt");
+    data.append('file_attachment', {
+      uri: singleFile.uri,
+      name: singleFile.name,
+      type: singleFile.mimeType,
+    });
 
     // return
     try {
@@ -479,7 +483,7 @@ const map = (x,in_min,in_max,out_min,out_max) =>
       <Dialog.Description>
         Ingrese el paso para la toma de datos en horas, se aceptan decimales:
       </Dialog.Description>
-      <Dialog.Input keyboardType="numbers-and-punctuation" onChangeText={text => {setStepValue(text)}}/>
+      <Dialog.Input  style = {{color:"black"}} keyboardType="numbers-and-punctuation"  onChangeText={text => {setStepValue(text)}}/>
       <Dialog.Button label="OK" onPress={handleStepOk}/>
       <Dialog.Button label="Cancel" onPress={handleStepCancel}/>
     </Dialog.Container>

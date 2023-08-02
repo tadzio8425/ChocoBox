@@ -69,6 +69,7 @@ export default function Main({navigation}) {
   const [visibleRefDia, setVisibleRefDia] = useState(false);
   const [visibleCali, setVisibleCali] = useState(false);
   const [visibleReset, setVisibleReset] = useState(false);
+  const [visibleStep, setVisibleStep] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [okDisabled, setOkDisabled] = useState(true);
   const [remainingTime, setRemainingTime] = useState(10);
@@ -123,8 +124,28 @@ export default function Main({navigation}) {
 };
 
 
+const handleStepOk = () =>{
+  fetchWithTimeout(`${ESP32IP}/step`, {
+    method: 'PUT',
+    timeout:1000,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({step:stepVal})
+  })
+  .catch(function (err){
+    console.log(err);  // Prints "Error: something went terribly wrong"
+});
+  setVisibleStep(false);
+};
+
+
+
 const handleResetCancel = () =>{
   setVisibleReset(false);
+};
+
+
+const handleStepCancel = () =>{
+  setVisibleStep(false);
 };
 
   const putCalibrate = () =>{
@@ -248,7 +269,10 @@ const uploadFile = async () => {
 
 
   const [selected, setSelected] = useState(false);
+  const [selectedStep, setSelectedStep] = useState(false);
   
+  const [stepVal, setStepValue] = useState(0.5);
+
   const loadData = useCallback(async () => {
     try {
       const response = await fetch(`${ESP32IP}/`);
@@ -426,6 +450,24 @@ const uploadFile = async () => {
       <Text style={styles.buttonText}>Data</Text>
 
     </Pressable>
+
+
+    <Pressable 
+    onPressIn = {() => {
+      setSelectedStep(!selectedStep);
+    }}
+
+   onPressOut = {() => {
+    setSelectedStep(!selectedStep);      
+    setVisibleStep(true);
+    }}
+  
+   style={[selectedStep ? styles.unpressedButton: styles.pressedButton, {marginLeft:50, marginTop:95, width:100}]}
+   
+   >
+      <Text style={[styles.buttonText]}>Step</Text>
+
+    </Pressable>
       </View>
 
     <Dialog.Container visible={visibleReset}>
@@ -435,6 +477,17 @@ const uploadFile = async () => {
       </Dialog.Description>
       <Dialog.Button label="OK" onPress={handleResetOk}/>
       <Dialog.Button label="Cancel" onPress={handleResetCancel}/>
+    </Dialog.Container>
+
+
+    <Dialog.Container visible={visibleStep}>
+      <Dialog.Title>Step</Dialog.Title>
+      <Dialog.Description>
+        Ingrese el paso para la toma de datos en horas, se aceptan decimales:
+      </Dialog.Description>
+      <Dialog.Input keyboardType="numbers-and-punctuation" onChangeText={text => {setStepValue(text)}}/>
+      <Dialog.Button label="OK" onPress={handleStepOk}/>
+      <Dialog.Button label="Cancel" onPress={handleStepCancel}/>
     </Dialog.Container>
 
 

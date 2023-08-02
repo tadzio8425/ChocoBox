@@ -28,6 +28,15 @@ void ConnecT::setWiFi_AP(char* wifi_ssid, char* wifi_password)
 
 
 void ConnecT::setWiFi_STA(char* wifi_ssid, char* wifi_password){
+
+
+    IPAddress local_ip(157,253,207,128);
+    IPAddress gateway(157,253,207,1);
+    IPAddress subnet(255,255,255,0);
+    IPAddress dns1(157,253,78,10);
+    IPAddress dns2(157,253,79,100);
+
+    WiFi.config(local_ip, gateway, subnet, dns1, dns2);
     WiFi.begin(wifi_ssid, wifi_password);
     Serial.println("\nConnecting");
 
@@ -42,6 +51,8 @@ void ConnecT::setWiFi_STA(char* wifi_ssid, char* wifi_password){
 
 
 }
+
+
 
 
 void ConnecT::setWiFi_wokwi()

@@ -35,6 +35,4 @@ void TemperatureController::update()
     {
         _heater->turnOFF();
     }
-
-    Serial.println(_output);
 }

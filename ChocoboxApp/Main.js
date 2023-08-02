@@ -201,7 +201,7 @@ const uploadFile = async () => {
     data.append('file_attachment', {
       uri: singleFile.uri,
       name: singleFile.name,
-      type: singleFile.mimeType,
+      type: singleFile.mimeType
     });
 
     // return

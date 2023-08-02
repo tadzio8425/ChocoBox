@@ -45,8 +45,8 @@ namespace ChocoBoxREST{
 
     float* _step;
 
+    int* _waterLevel;
     
-
     void add_json_object(char *tag, float value, char *unit) {
         JsonObject obj = jsonDocument.createNestedObject();
         obj["type"] = tag;
@@ -85,6 +85,8 @@ namespace ChocoBoxREST{
 
       add_json_object("heaterON", (*_heaterOn), "B");
       add_json_object("humidON", (*_humidifierOn), "B");
+
+      add_json_object("waterLvl", (*_waterLevel), "V");
 
       serializeJson(jsonDocument, buffer); 
       (*_serverPointer).send(200, "application/json", buffer);
@@ -184,6 +186,11 @@ namespace ChocoBoxREST{
 
     void linkPreferences(Preferences* pref){
       _preferences = pref;
+    }
+
+
+    void linkWater(int* wtr){
+      _waterLevel = wtr;
     }
     
 

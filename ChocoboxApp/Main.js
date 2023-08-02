@@ -15,6 +15,7 @@ import MarkSlider from 'react-native-mark-slider';
 import { CountdownCircleTimer } from 'react-native-countdown-circle-timer';
 import * as WebBrowser from 'expo-web-browser';
 import * as DocumentPicker from 'expo-document-picker';
+import * as Progress from 'react-native-progress';
 
 const marks = [
   { name: '0  RPM', value: 0 },
@@ -227,21 +228,11 @@ const uploadFile = async () => {
   }
 };
 
-  const putRPM = (value) =>{
+const map = (x,in_min,in_max,out_min,out_max) =>
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+};
 
-    actualRPM = value;
-
-
-    fetchWithTimeout(`${ESP32IP}/rpm`, {
-      method: 'PUT',
-      timeout:1000,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({rpm:value})
-    })
-    .catch(function (err){
-      console.log(err);  // Prints "Error: something went terribly wrong"
-  });
-  }
   const [avgTemp, setAvgTemp] = useState({"value":0});
 
   const [dataJSON, setData] = useState(true);
@@ -263,6 +254,8 @@ const uploadFile = async () => {
 
   const[heaterON, setHeaterON] = useState({"value":0});
   const[humidON, setHumidON] = useState({"value":0});
+
+  const[waterLvl, setWater] = useState({"value":0});
 
   const[resColor, setResColor]= useState("#b47b42");
   const[humidColor, setHumColor]= useState("white");
@@ -291,6 +284,7 @@ const uploadFile = async () => {
       setGlobalTemp(dataJSON[9]);
       setHeaterON(dataJSON[10]);
       setHumidON(dataJSON[11]);
+      setWater(dataJSON[12]);
     } catch (error) {
       console.log(error);
     }
@@ -407,10 +401,10 @@ const uploadFile = async () => {
 
         </View>
 
+        <Progress.Bar style={[{marginBottom:10}]} progress={map(waterLvl["value"], 300, 1750, 0, 1)} width={200} />
 
         <View style={[styles.innerConntainer, {flexDirection:"row", justifyContent:"center",
         alignItems:"center", padding:0}]}>  
-
           <View style={styles.resistorPin}></View>
           <View style={[styles.resistor, {backgroundColor:resColor, opacity:0.6}]}></View>
           <View style={styles.resistorPin}></View>

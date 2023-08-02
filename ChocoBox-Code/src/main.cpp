@@ -106,9 +106,11 @@ void sendSplineSD(const std::vector<float>& hourVec,
 #define DHTPIN_01 4 // Pin del sensor DHT 01
 #define DHTPIN_02 2 // Pin del sensor DHT 02
 
-#define ONE_WIRE_BUS 25
+#define ONE_WIRE_BUS 25 //Pin OneWire
 
-#define chipSelect 5
+#define chipSelect 5 //Pin de CS
+
+#define PIN_WTR 34 //Pin análogo para el sensor de nivel de agua
 
 
 //Direcciones DS18B20
@@ -123,6 +125,7 @@ uint8_t sensD_add[] = {0x28, 0xFF, 0x64, 0x1E, 0x1F, 0x84, 0x68, 0xCD};
 bool useWiFi = false;
 
 /* Sensores -  Variables */
+int waterLevel = 0; //Variable que almacena el nivel de agua
 float humidity_01 = 0; // Variable que almacena la humedad
 float temperature_01 = 0; // Variable que almacena la temperatura
 float humidity_02 = 0; // Variable que almacena la humedad
@@ -267,9 +270,11 @@ void handleFileUpload()
 void setup() {
   Serial.begin(115200); // Inicialización del puerto serial
 
+  //Config sensor de nivel de agua
+  pinMode(PIN_WTR, INPUT);
+
   /* Inicialización apuntadores */
   resetPointer = &defaultReset; 
-
 
   /*Configuración tarjeta SD*/
   Serial.print("Iniciando tajeta SD...");
@@ -384,6 +389,7 @@ void setup() {
   ChocoBoxREST::linkHumidOn(&(humidifier.isOn));
   ChocoBoxREST::linkStep(&paso);	
   ChocoBoxREST::linkPreferences(&preferences);
+  ChocoBoxREST::linkWater(&waterLevel);
 
   //Vincular el API REST con el servidor WiFi
   connecT.addGETtoWeb("/", ChocoBoxREST::GETAll);
@@ -400,6 +406,8 @@ void loop() {
   /* Se actualiza el tiempo actual */
   now = rtc.now().unixtime();
 
+  /*Se revisa el nivel de agua*/
+  waterLevel = analogRead(PIN_WTR);
 
   /* Se revisa si se desea resetear la fermentación */
   if(*resetPointer){

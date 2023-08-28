@@ -110,6 +110,11 @@ The ESP32 is set in *AP* mode, which means that it acts as an *Access Point* (A.
 - **Once connected to the _ChocoBox_ network, the ESP32 can be accessed using its IP Address which will always be:**
 - **192.168.1.1**
 
+| The ChocoBox Network |
+| --- |
+|   <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/332d49d3-b0d7-412d-b6d2-de952d9e37dd" width="250px"/>|
+
+
 ### iii. Monitoring 02: Rest API
 
 | Root: / |
@@ -118,9 +123,17 @@ The ESP32 is set in *AP* mode, which means that it acts as an *Access Point* (A.
 
 Accessing the root of the rest API via any browser (192.168.1.1/) displays the current state of its variables. Thus, ChocoBox can be monitored in real time without the need of an external app.
 
-| Download dataLog: /datalog | Upload environment: /environment |
-| --- | --- |
-|   |   |
+| Request | Path  | Description |
+| --- | --- | --- |
+| GET | /datalog  | Downloads the dataLog up to the latest measurement.|
+| POST | /environment | Uploads an environment.txt to the system. When the system is reset, the uploaded file will set a new curve to follow. The included python script displays its POST format.|
+| POST | /step | Updates the step of the spline algorithm. Its content must be a number that represents a certain number of hours (at least 0.05).|
 
 ### iv. Monitoring 03: App
+An app was developed using the Expo Framework in order to unify all the API Requests in an intuitive and user friendly interface.
+
+| Init Page| Main Page | Data Module |
+| --- | --- | --- |
+| <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/93b2f080-5f68-4d68-b3a1-6c8a98aceeab" width="250px"/> | <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/77f3431a-5e59-437d-a9eb-2e3adbc5bbc2" width="250px"/> | <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/6e57b2c3-14d8-4f2d-a925-fd68d6415a57" width="250px"/>|
+
 

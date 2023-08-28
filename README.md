@@ -112,7 +112,15 @@ The ESP32 is set in *AP* mode, which means that it acts as an *Access Point* (A.
 
 ### iii. Monitoring 02: Rest API
 
+| Root: / |
+| --- |
+|   <img src="https://github.com/tadzio8425/ChocoBox/assets/78126968/bf82e7d2-db9e-45c3-ab49-a6c798b84196" width="500px"/>|
 
+Accessing the root of the rest API via any browser (192.168.1.1/) displays the current state of its variables. Thus, ChocoBox can be monitored in real time without the need of an external app.
+
+| Download dataLog: /datalog | Upload environment: /environment |
+| --- | --- |
+|   |   |
 
 ### iv. Monitoring 03: App
 
